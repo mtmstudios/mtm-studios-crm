@@ -119,17 +119,17 @@ export default function Reputation() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Reputation Management</h1>
-          <p className="text-sm text-muted-foreground">Bewertungen verwalten & Anfragen senden</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Reputation</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Bewertungen verwalten & Anfragen senden</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><Send className="h-4 w-4 mr-2" />Anfrage senden</Button>
+              <Button variant="outline" size="sm"><Send className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Anfrage senden</span></Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-border">
+            <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Bewertungsanfrage erstellen</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <Input placeholder="Kontaktname *" value={newRequest.contact_name} onChange={e => setNewRequest(p => ({ ...p, contact_name: e.target.value }))} />
@@ -146,9 +146,9 @@ export default function Reputation() {
           </Dialog>
           <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm"><Plus className="h-4 w-4 mr-2" />Bewertung hinzufügen</Button>
+              <Button size="sm"><Plus className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Bewertung</span></Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-border">
+            <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Bewertung manuell erfassen</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <Input placeholder="Autor *" value={newReview.author_name} onChange={e => setNewReview(p => ({ ...p, author_name: e.target.value }))} />

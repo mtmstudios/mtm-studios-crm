@@ -155,14 +155,14 @@ export default function Snapshots() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Snapshots</h1>
-          <p className="text-sm text-muted-foreground">CRM-Konfiguration exportieren & wiederherstellen</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Snapshots</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">CRM-Konfiguration exportieren & wiederherstellen</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={importSnapshot}>
-            <Upload className="h-4 w-4 mr-2" />Importieren
+            <Upload className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Importieren</span>
           </Button>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>

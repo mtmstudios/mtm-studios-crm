@@ -189,12 +189,12 @@ export default function Appointments() {
       </div>
 
       {/* View switcher + navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button variant="outline" size="icon" className="h-8 w-8 border-border" onClick={() => navigate(-1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-sm font-medium text-foreground min-w-[140px] text-center">
+          <h2 className="text-xs sm:text-sm font-medium text-foreground min-w-[100px] sm:min-w-[140px] text-center">
             {viewMode === "month" && format(currentDate, "MMMM yyyy", { locale: de })}
             {viewMode === "week" && `KW ${format(currentDate, "w", { locale: de })} – ${format(currentDate, "MMM yyyy", { locale: de })}`}
             {viewMode === "day" && format(currentDate, "EEEE, d. MMMM", { locale: de })}
@@ -206,7 +206,7 @@ export default function Appointments() {
         </div>
         <div className="flex bg-surface rounded-md border border-border">
           {(["month", "week", "day"] as ViewMode[]).map((v) => (
-            <button key={v} onClick={() => setViewMode(v)} className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"} ${v === "month" ? "rounded-l-md" : v === "day" ? "rounded-r-md" : ""}`}>
+            <button key={v} onClick={() => setViewMode(v)} className={`px-2.5 sm:px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"} ${v === "month" ? "rounded-l-md" : v === "day" ? "rounded-r-md" : ""}`}>
               {v === "month" ? "Monat" : v === "week" ? "Woche" : "Tag"}
             </button>
           ))}
