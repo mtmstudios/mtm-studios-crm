@@ -2,7 +2,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, Building2, Handshake, CalendarCheck, Mic, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -14,7 +13,6 @@ const navItems = [
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
