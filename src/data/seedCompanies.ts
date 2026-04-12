@@ -105,14 +105,13 @@ export const seedCompanies: SeedCompany[] = [
     deal: { title: "n8n Automatisierung", stage: "won" },
     notes: "SEO-Automation. Anleitung vorhanden.",
   },
-  // 12 – FIRMENNAME FEHLT
+  // 13
   {
-    name: "FIRMA_12",
-    industry: "Handwerk & Schreinerei",
+    name: "FIRMA_13",
+    industry: "Gesundheit & Zahnarzt",
     status: "prospect",
-    deal: { title: "Voice KI Assistent", stage: "qualified" },
-    notes: "In Bearbeitung. Noch keine Dateien erstellt.",
+    deal: { title: "Voice KI Assistent", stage: "proposal" },
+    notes: "Blueprint vorhanden.",
   },
-  // === FIRMEN 13-19 FEHLEN NOCH ===
-  // Bitte hier ergänzen oder als Datei hochladen.
+  // === FIRMEN 14-19 FEHLEN NOCH ===
 ];
