@@ -168,7 +168,7 @@ export default function CompanyDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-card border border-border">
+        <TabsList className="bg-card border border-border w-full sm:w-auto overflow-x-auto">
           <TabsTrigger value="overview" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Übersicht</TabsTrigger>
           <TabsTrigger value="contacts" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Kontakte ({contacts.length})</TabsTrigger>
           <TabsTrigger value="deals" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Deals ({deals.length})</TabsTrigger>
@@ -226,7 +226,7 @@ export default function CompanyDetail() {
               <DialogTrigger asChild>
                 <Button className="bg-primary text-primary-foreground rounded-md"><Plus className="h-4 w-4 mr-1" /> Neuer Kontakt</Button>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border">
+              <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="text-foreground">Kontakt für {company.name}</DialogTitle></DialogHeader>
                 <form onSubmit={(e) => { e.preventDefault(); createContactMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
@@ -268,7 +268,7 @@ export default function CompanyDetail() {
               <DialogTrigger asChild>
                 <Button className="bg-primary text-primary-foreground rounded-md"><Plus className="h-4 w-4 mr-1" /> Neuer Deal</Button>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border">
+              <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="text-foreground">Deal für {company.name}</DialogTitle></DialogHeader>
                 <form onSubmit={(e) => { e.preventDefault(); createDealMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
                   <div><Label className="text-secondary-foreground">Titel</Label><Input name="title" required className="bg-surface border-border rounded-md" /></div>

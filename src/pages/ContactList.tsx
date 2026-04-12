@@ -81,7 +81,7 @@ export default function ContactList() {
               <Plus className="h-4 w-4 mr-1" /> Neuer Kontakt
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-border">
+          <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle className="text-foreground">Neuer Kontakt</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -126,7 +126,7 @@ export default function ContactList() {
           <Input placeholder="Kontakte suchen..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-card border-border rounded-md" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent className="bg-card border-border">
             <SelectItem value="all">Alle Status</SelectItem>
             <SelectItem value="lead">Lead</SelectItem>
@@ -136,7 +136,7 @@ export default function ContactList() {
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Quelle" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Quelle" /></SelectTrigger>
           <SelectContent className="bg-card border-border">
             <SelectItem value="all">Alle Quellen</SelectItem>
             <SelectItem value="manual">Manuell</SelectItem>

@@ -136,7 +136,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
         <KPICard label="Umsatz (Gewonnen)" value={formatCurrency(totalRevenue)} icon={BadgeEuro} />
         <KPICard label="Pipeline-Wert" value={formatCurrency(pipelineValue)} icon={Euro} />
         <KPICard label="Gewichtete Pipeline" value={formatCurrency(weightedPipeline)} icon={TrendingUp} />
@@ -149,7 +149,7 @@ export default function Dashboard() {
         {/* Pipeline Chart */}
         <div className="bg-card rounded-lg border border-border p-5">
           <h2 className="text-sm font-medium text-foreground mb-4">Pipeline-Übersicht</h2>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={180}>
             <BarChart data={stageData}>
               <XAxis dataKey="name" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -172,7 +172,7 @@ export default function Dashboard() {
           {recentActivities.length === 0 ? (
             <p className="text-secondary-foreground text-sm">Keine Aktivitäten vorhanden</p>
           ) : (
-            <div className="space-y-3 max-h-[220px] overflow-auto">
+            <div className="space-y-3 max-h-[180px] overflow-auto">
               {recentActivities.map((a: any) => {
                 const Icon = activityIcons[a.type] || CalendarCheck;
                 return (
@@ -203,7 +203,7 @@ export default function Dashboard() {
         {voiceLeads.length === 0 ? (
           <p className="text-secondary-foreground text-sm">Keine neuen Voice Leads</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {voiceLeads.map((vl: any) => (
               <div key={vl.id} className="bg-surface rounded-lg p-4 border border-border">
                 <div className="flex items-center justify-between mb-2">
