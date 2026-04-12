@@ -44,7 +44,7 @@ export function AutomationManager({ stage, stageLabel }: AutomationManagerProps)
       const { data, error } = await supabase
         .from("pipeline_automations")
         .select("*")
-        .eq("deal_stage", stage)
+        .eq("deal_stage", stage as "lead" | "qualified" | "proposal" | "negotiation" | "won" | "lost")
         .order("created_at");
       if (error) throw error;
       return data || [];
