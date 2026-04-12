@@ -242,6 +242,39 @@ export type Database = {
           },
         ]
       }
+      pipeline_automations: {
+        Row: {
+          action_config: Json
+          action_type: Database["public"]["Enums"]["automation_action_type"]
+          created_at: string
+          deal_stage: Database["public"]["Enums"]["deal_stage"]
+          enabled: boolean
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: Database["public"]["Enums"]["automation_action_type"]
+          created_at?: string
+          deal_stage: Database["public"]["Enums"]["deal_stage"]
+          enabled?: boolean
+          id?: string
+          name?: string
+          owner_id: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: Database["public"]["Enums"]["automation_action_type"]
+          created_at?: string
+          deal_stage?: Database["public"]["Enums"]["deal_stage"]
+          enabled?: boolean
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
       voice_leads: {
         Row: {
           ai_score: number | null
@@ -301,6 +334,11 @@ export type Database = {
     }
     Enums: {
       activity_type: "call" | "email" | "meeting" | "task" | "note"
+      automation_action_type:
+        | "send_email"
+        | "send_sms"
+        | "create_task"
+        | "webhook"
       company_size: "startup" | "smb" | "mid_market" | "enterprise"
       contact_source: "manual" | "voice_ai" | "website" | "referral"
       contact_status: "lead" | "prospect" | "customer" | "inactive"
@@ -441,6 +479,12 @@ export const Constants = {
   public: {
     Enums: {
       activity_type: ["call", "email", "meeting", "task", "note"],
+      automation_action_type: [
+        "send_email",
+        "send_sms",
+        "create_task",
+        "webhook",
+      ],
       company_size: ["startup", "smb", "mid_market", "enterprise"],
       contact_source: ["manual", "voice_ai", "website", "referral"],
       contact_status: ["lead", "prospect", "customer", "inactive"],
