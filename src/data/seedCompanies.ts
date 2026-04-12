@@ -113,5 +113,13 @@ export const seedCompanies: SeedCompany[] = [
     deal: { title: "Voice KI Assistent", stage: "proposal" },
     notes: "Blueprint vorhanden.",
   },
-  // === FIRMEN 14-19 FEHLEN NOCH ===
+  // 14
+  {
+    name: "FIRMA_14",
+    industry: "Gesundheit & Kieferorthopädie",
+    status: "prospect",
+    deal: { title: "Voice KI Assistent", stage: "proposal" },
+    notes: "Blueprint + System Prompt erstellt.",
+  },
+  // === FIRMEN 15-19 FEHLEN NOCH ===
 ];
