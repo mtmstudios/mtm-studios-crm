@@ -15,6 +15,8 @@ import ActivityList from "@/pages/ActivityList";
 import VoiceLeads from "@/pages/VoiceLeads";
 import Appointments from "@/pages/Appointments";
 import Inbox from "@/pages/Inbox";
+import Reputation from "@/pages/Reputation";
+import Snapshots from "@/pages/Snapshots";
 import BookingPage from "@/pages/BookingPage";
 import NotFound from "@/pages/NotFound";
 
@@ -44,6 +46,8 @@ const App = () => (
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/activities" element={<ActivityList />} />
                   <Route path="/voice-leads" element={<VoiceLeads />} />
+                  <Route path="/reputation" element={<Reputation />} />
+                  <Route path="/snapshots" element={<Snapshots />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AppLayout>

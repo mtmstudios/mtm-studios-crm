@@ -455,6 +455,131 @@ export type Database = {
         }
         Relationships: []
       }
+      review_requests: {
+        Row: {
+          completed_at: string | null
+          contact_email: string | null
+          contact_id: string | null
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          platform: string
+          review_url: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["review_request_status"]
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          owner_id: string
+          platform?: string
+          review_url?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["review_request_status"]
+        }
+        Update: {
+          completed_at?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          platform?: string
+          review_url?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["review_request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_requests_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          author_name: string
+          content: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          platform: string
+          rating: number
+          responded: boolean
+          response_text: string | null
+          review_date: string
+          review_url: string | null
+        }
+        Insert: {
+          author_name: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          owner_id: string
+          platform?: string
+          rating: number
+          responded?: boolean
+          response_text?: string | null
+          review_date?: string
+          review_url?: string | null
+        }
+        Update: {
+          author_name?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          platform?: string
+          rating?: number
+          responded?: boolean
+          response_text?: string | null
+          review_date?: string
+          review_url?: string | null
+        }
+        Relationships: []
+      }
+      snapshots: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          snapshot_data: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          snapshot_data?: Json
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          snapshot_data?: Json
+          version?: number
+        }
+        Relationships: []
+      }
       voice_leads: {
         Row: {
           ai_score: number | null
@@ -533,6 +658,7 @@ export type Database = {
         | "lost"
       message_direction: "inbound" | "outbound"
       message_status: "sent" | "delivered" | "read" | "failed"
+      review_request_status: "pending" | "sent" | "completed" | "declined"
       voice_lead_intent: "information" | "appointment" | "callback" | "other"
       voice_lead_status: "new" | "contacted" | "converted" | "dismissed"
     }
@@ -684,6 +810,7 @@ export const Constants = {
       ],
       message_direction: ["inbound", "outbound"],
       message_status: ["sent", "delivered", "read", "failed"],
+      review_request_status: ["pending", "sent", "completed", "declined"],
       voice_lead_intent: ["information", "appointment", "callback", "other"],
       voice_lead_status: ["new", "contacted", "converted", "dismissed"],
     },
