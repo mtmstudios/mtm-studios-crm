@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/crm/StatusBadge";
 import { EmptyState } from "@/components/crm/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -38,11 +39,11 @@ function DealCard({ deal, onClick, dragging }: { deal: any; onClick: () => void;
       className={`bg-surface rounded-lg border p-3 cursor-grab active:cursor-grabbing hover:border-primary/30 transition-colors mb-2 select-none ${dragging ? "opacity-50 border-primary/50" : "border-border"}`}
     >
       <p className="text-sm text-foreground font-medium truncate">{deal.title}</p>
-      {deal.contacts && (
-        <p className="text-xs text-secondary-foreground mt-0.5">{deal.contacts.first_name} {deal.contacts.last_name}</p>
-      )}
-      {deal.companies && !deal.contacts && (
+      {deal.companies && (
         <p className="text-xs text-secondary-foreground mt-0.5">{deal.companies.name}</p>
+      )}
+      {deal.contacts && !deal.companies && (
+        <p className="text-xs text-secondary-foreground mt-0.5">{deal.contacts.first_name} {deal.contacts.last_name}</p>
       )}
       <div className="flex items-center justify-between mt-2">
         <span className="text-sm text-primary font-medium">{formatCurrency(Number(deal.value))}</span>
@@ -86,6 +87,8 @@ export default function DealPipeline() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
+  const [lostReasonDeal, setLostReasonDeal] = useState<{ id: string; title: string } | null>(null);
+  const [lostReason, setLostReason] = useState("");
 
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ["deals"],
@@ -104,12 +107,40 @@ export default function DealPipeline() {
     },
   });
 
-  const updateStageMutation = useMutation({
-    mutationFn: async ({ dealId, stage }: { dealId: string; stage: string }) => {
-      const { error } = await supabase.from("deals").update({ stage: stage as any }).eq("id", dealId);
-      if (error) throw error;
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies-select"],
+    queryFn: async () => {
+      const { data } = await supabase.from("companies").select("id, name").order("name");
+      return data || [];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["deals"] }),
+  });
+
+  const updateStageMutation = useMutation({
+    mutationFn: async ({ dealId, stage, lostReason }: { dealId: string; stage: string; lostReason?: string }) => {
+      const updates: any = { stage: stage as any };
+      if (stage === "won") updates.close_date = new Date().toISOString().split("T")[0];
+      if (stage === "lost" && lostReason) updates.lost_reason = lostReason;
+      const { error } = await supabase.from("deals").update(updates).eq("id", dealId);
+      if (error) throw error;
+
+      // Log stage change as activity
+      const deal = deals.find((d) => d.id === dealId);
+      const fromLabel = deal ? stageLabels[deal.stage] : "?";
+      const toLabel = stageLabels[stage];
+      await supabase.from("activities").insert({
+        type: "note" as const,
+        title: `Deal-Phase: ${fromLabel} → ${toLabel}`,
+        description: stage === "lost" && lostReason ? `Grund: ${lostReason}` : null,
+        deal_id: dealId,
+        company_id: deal?.company_id || null,
+        contact_id: deal?.contact_id || null,
+        owner_id: user!.id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -122,6 +153,7 @@ export default function DealPipeline() {
         probability: Number(formData.get("probability")) || 0,
         close_date: formData.get("close_date") as string || null,
         contact_id: formData.get("contact_id") as string || null,
+        company_id: formData.get("company_id") as string || null,
         owner_id: user!.id,
       });
       if (error) throw error;
@@ -144,9 +176,21 @@ export default function DealPipeline() {
     if (stages.includes(overId as any)) {
       const deal = deals.find((d) => d.id === String(active.id));
       if (deal && deal.stage !== overId) {
-        updateStageMutation.mutate({ dealId: String(active.id), stage: overId });
+        if (overId === "lost") {
+          setLostReasonDeal({ id: String(active.id), title: deal.title });
+          setLostReason("");
+        } else {
+          updateStageMutation.mutate({ dealId: String(active.id), stage: overId });
+        }
       }
     }
+  };
+
+  const handleLostConfirm = () => {
+    if (!lostReasonDeal) return;
+    updateStageMutation.mutate({ dealId: lostReasonDeal.id, stage: "lost", lostReason: lostReason || undefined });
+    setLostReasonDeal(null);
+    setLostReason("");
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
@@ -164,6 +208,14 @@ export default function DealPipeline() {
             <DialogHeader><DialogTitle className="text-foreground">Neuer Deal</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
               <div><Label className="text-secondary-foreground">Titel</Label><Input name="title" required className="bg-surface border-border rounded-md" /></div>
+              <div><Label className="text-secondary-foreground">Unternehmen</Label>
+                <Select name="company_id">
+                  <SelectTrigger className="bg-surface border-border rounded-md"><SelectValue placeholder="Unternehmen wählen" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="text-secondary-foreground">Wert (€)</Label><Input name="value" type="number" step="0.01" className="bg-surface border-border rounded-md" /></div>
                 <div><Label className="text-secondary-foreground">Wahrscheinlichkeit (%)</Label><Input name="probability" type="number" min="0" max="100" className="bg-surface border-border rounded-md" /></div>
@@ -221,6 +273,23 @@ export default function DealPipeline() {
           </DragOverlay>
         </DndContext>
       )}
+
+      {/* Lost Reason Dialog */}
+      <Dialog open={!!lostReasonDeal} onOpenChange={(open) => { if (!open) { setLostReasonDeal(null); setLostReason(""); } }}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle className="text-foreground">Deal verloren: {lostReasonDeal?.title}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-secondary-foreground">Grund (optional)</Label>
+              <Textarea value={lostReason} onChange={(e) => setLostReason(e.target.value)} placeholder="Warum wurde der Deal verloren?" className="bg-surface border-border rounded-md" />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleLostConfirm} className="flex-1 bg-destructive text-destructive-foreground">Als verloren markieren</Button>
+              <Button variant="outline" onClick={() => { setLostReasonDeal(null); setLostReason(""); }} className="border-border">Abbrechen</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

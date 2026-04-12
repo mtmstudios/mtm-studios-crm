@@ -25,6 +25,22 @@ export default function ActivityList() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [tab, setTab] = useState("all");
 
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts-select"],
+    queryFn: async () => {
+      const { data } = await supabase.from("contacts").select("id, first_name, last_name");
+      return data || [];
+    },
+  });
+
+  const { data: dealOptions = [] } = useQuery({
+    queryKey: ["deals-select"],
+    queryFn: async () => {
+      const { data } = await supabase.from("deals").select("id, title");
+      return data || [];
+    },
+  });
+
   const { data: activities = [], isLoading } = useQuery({
     queryKey: ["activities"],
     queryFn: async () => {
@@ -41,6 +57,8 @@ export default function ActivityList() {
         title: formData.get("title") as string,
         description: formData.get("description") as string || null,
         due_date: formData.get("due_date") ? new Date(formData.get("due_date") as string).toISOString() : null,
+        contact_id: formData.get("contact_id") as string || null,
+        deal_id: formData.get("deal_id") as string || null,
         owner_id: user!.id,
       });
       if (error) throw error;
@@ -94,6 +112,24 @@ export default function ActivityList() {
               </div>
               <div><Label className="text-secondary-foreground">Titel</Label><Input name="title" required className="bg-surface border-border rounded-md" /></div>
               <div><Label className="text-secondary-foreground">Beschreibung</Label><Textarea name="description" className="bg-surface border-border rounded-md" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label className="text-secondary-foreground">Kontakt</Label>
+                  <Select name="contact_id">
+                    <SelectTrigger className="bg-surface border-border rounded-md"><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {contacts.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label className="text-secondary-foreground">Deal</Label>
+                  <Select name="deal_id">
+                    <SelectTrigger className="bg-surface border-border rounded-md"><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {dealOptions.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div><Label className="text-secondary-foreground">Fällig am</Label><Input name="due_date" type="datetime-local" className="bg-surface border-border rounded-md" /></div>
               <Button type="submit" disabled={createMutation.isPending} className="w-full bg-primary text-primary-foreground rounded-md">
                 {createMutation.isPending ? "Wird erstellt..." : "Erstellen"}

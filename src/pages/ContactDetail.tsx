@@ -13,8 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Phone, Mail, Calendar, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Phone, Mail, Calendar, FileText, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
@@ -62,6 +66,18 @@ export default function ContactDetail() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("contacts").delete().eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Kontakt gelöscht");
+      navigate("/contacts");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const addActivityMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       const { error } = await supabase.from("activities").insert({
@@ -93,9 +109,28 @@ export default function ContactDetail() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <button onClick={() => navigate("/contacts")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Zurück
-      </button>
+      <div className="flex items-center justify-between">
+        <button onClick={() => navigate("/contacts")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Zurück
+        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-card border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-foreground">Kontakt löschen?</AlertDialogTitle>
+              <AlertDialogDescription>"{contact.first_name} {contact.last_name}" wird unwiderruflich gelöscht.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-border">Abbrechen</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteMutation.mutate()} className="bg-destructive text-destructive-foreground">Löschen</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
 
       <div className="flex items-center gap-4">
         <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} className="w-12 h-12 text-lg" />
@@ -109,22 +144,43 @@ export default function ContactDetail() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-card border border-border">
           <TabsTrigger value="overview" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Übersicht</TabsTrigger>
-          <TabsTrigger value="activities" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Aktivitäten</TabsTrigger>
-          <TabsTrigger value="deals" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Deals</TabsTrigger>
+          <TabsTrigger value="activities" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Aktivitäten ({activities.length})</TabsTrigger>
+          <TabsTrigger value="deals" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Deals ({deals.length})</TabsTrigger>
           <TabsTrigger value="notes" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Notizen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
           <div className="bg-card rounded-lg border border-border p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><Label className="text-muted-foreground text-xs">E-Mail</Label><p className="text-sm text-foreground">{contact.email || "—"}</p></div>
-            <div><Label className="text-muted-foreground text-xs">Telefon</Label><p className="text-sm text-foreground">{contact.phone || "—"}</p></div>
-            <div><Label className="text-muted-foreground text-xs">Position</Label><p className="text-sm text-foreground">{contact.position || "—"}</p></div>
-            <div><Label className="text-muted-foreground text-xs">Unternehmen</Label><p className="text-sm text-foreground">{contact.companies?.name || "—"}</p></div>
-            <div><Label className="text-muted-foreground text-xs">Quelle</Label><StatusBadge status={contact.source} /></div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Vorname</Label>
+              <Input defaultValue={contact.first_name} className="bg-surface border-border rounded-md mt-1" onBlur={(e) => { if (e.target.value !== contact.first_name) updateMutation.mutate({ first_name: e.target.value }); }} />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Nachname</Label>
+              <Input defaultValue={contact.last_name} className="bg-surface border-border rounded-md mt-1" onBlur={(e) => { if (e.target.value !== contact.last_name) updateMutation.mutate({ last_name: e.target.value }); }} />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">E-Mail</Label>
+              <Input type="email" defaultValue={contact.email || ""} className="bg-surface border-border rounded-md mt-1" onBlur={(e) => { if (e.target.value !== (contact.email || "")) updateMutation.mutate({ email: e.target.value || null }); }} />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Telefon</Label>
+              <Input defaultValue={contact.phone || ""} className="bg-surface border-border rounded-md mt-1" onBlur={(e) => { if (e.target.value !== (contact.phone || "")) updateMutation.mutate({ phone: e.target.value || null }); }} />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Position</Label>
+              <Input defaultValue={contact.position || ""} className="bg-surface border-border rounded-md mt-1" onBlur={(e) => { if (e.target.value !== (contact.position || "")) updateMutation.mutate({ position: e.target.value || null }); }} />
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Unternehmen</Label>
+              <p className="text-sm text-foreground cursor-pointer hover:text-primary mt-2" onClick={() => contact.companies && navigate(`/companies/${contact.companies.id}`)}>
+                {contact.companies?.name || "—"}
+              </p>
+            </div>
             <div>
               <Label className="text-muted-foreground text-xs">Status</Label>
               <Select value={contact.status} onValueChange={(v) => updateMutation.mutate({ status: v })}>
-                <SelectTrigger className="w-fit bg-transparent border-none p-0 h-auto"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="bg-surface border-border rounded-md mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent className="bg-card border-border">
                   <SelectItem value="lead">Lead</SelectItem>
                   <SelectItem value="prospect">Interessent</SelectItem>
@@ -132,6 +188,10 @@ export default function ContactDetail() {
                   <SelectItem value="inactive">Inaktiv</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Quelle</Label>
+              <StatusBadge status={contact.source} className="mt-2" />
             </div>
           </div>
         </TabsContent>
@@ -180,7 +240,7 @@ export default function ContactDetail() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground font-medium">{a.title}</p>
-                        <p className="text-xs text-secondary-foreground">{a.description || ""}</p>
+                        {a.description && <p className="text-xs text-secondary-foreground mt-0.5">{a.description}</p>}
                         <p className="text-xs text-muted-foreground mt-1">
                           {format(new Date(a.created_at), "dd.MM.yyyy HH:mm", { locale: de })}
                           {a.due_date && ` · Fällig: ${format(new Date(a.due_date), "dd.MM.yyyy", { locale: de })}`}
@@ -219,11 +279,7 @@ export default function ContactDetail() {
               defaultValue={contact.notes || ""}
               placeholder="Notizen zum Kontakt..."
               className="bg-surface border-border rounded-md min-h-[200px]"
-              onBlur={(e) => {
-                if (e.target.value !== (contact.notes || "")) {
-                  updateMutation.mutate({ notes: e.target.value });
-                }
-              }}
+              onBlur={(e) => { if (e.target.value !== (contact.notes || "")) updateMutation.mutate({ notes: e.target.value }); }}
             />
           </div>
         </TabsContent>

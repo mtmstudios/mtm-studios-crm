@@ -15,6 +15,7 @@ export async function runSeed(userId: string): Promise<{ companiesInserted: numb
         city: sc.city || null,
         website: sc.website || null,
         notes: sc.notes || null,
+        status: sc.status as any,
         owner_id: userId,
       })
       .select("id")

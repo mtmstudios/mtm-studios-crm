@@ -27,6 +27,14 @@ export default function ContactList() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies-select"],
+    queryFn: async () => {
+      const { data } = await supabase.from("companies").select("id, name").order("name");
+      return data || [];
+    },
+  });
+
   const { data: contacts = [], isLoading } = useQuery({
     queryKey: ["contacts", debouncedSearch, statusFilter, sourceFilter],
     queryFn: async () => {
@@ -48,6 +56,7 @@ export default function ContactList() {
         email: formData.get("email") as string || null,
         phone: formData.get("phone") as string || null,
         position: formData.get("position") as string || null,
+        company_id: formData.get("company_id") as string || null,
         source: (formData.get("source") as any) || "manual",
         status: "lead",
         owner_id: user!.id,
@@ -82,6 +91,14 @@ export default function ContactList() {
               <div><Label className="text-secondary-foreground">E-Mail</Label><Input name="email" type="email" className="bg-surface border-border rounded-md" /></div>
               <div><Label className="text-secondary-foreground">Telefon</Label><Input name="phone" className="bg-surface border-border rounded-md" /></div>
               <div><Label className="text-secondary-foreground">Position</Label><Input name="position" className="bg-surface border-border rounded-md" /></div>
+              <div><Label className="text-secondary-foreground">Unternehmen</Label>
+                <Select name="company_id">
+                  <SelectTrigger className="bg-surface border-border rounded-md"><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {companies.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label className="text-secondary-foreground">Quelle</Label>
                 <Select name="source" defaultValue="manual">

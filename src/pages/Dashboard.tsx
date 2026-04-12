@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { KPICard } from "@/components/crm/KPICard";
 import { StatusBadge } from "@/components/crm/StatusBadge";
-import { Users, Handshake, Euro, CalendarCheck, Mic, Phone, Clock, Upload } from "lucide-react";
+import { Users, Handshake, Euro, CalendarCheck, Mic, Phone, Clock, Upload, TrendingUp, BadgeEuro } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -109,6 +109,9 @@ export default function Dashboard() {
 
   const openDeals = deals.filter((d) => !["won", "lost"].includes(d.stage));
   const pipelineValue = openDeals.reduce((sum, d) => sum + Number(d.value), 0);
+  const weightedPipeline = openDeals.reduce((sum, d) => sum + Number(d.value) * (d.probability / 100), 0);
+  const wonDeals = deals.filter((d) => d.stage === "won");
+  const totalRevenue = wonDeals.reduce((sum, d) => sum + Number(d.value), 0);
 
   const stageData = ["lead", "qualified", "proposal", "negotiation", "won", "lost"].map((stage) => {
     const stageDeals = deals.filter((d) => d.stage === stage);
@@ -133,10 +136,12 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Kontakte gesamt" value={contactCount} icon={Users} />
-        <KPICard label="Offene Deals" value={openDeals.length} icon={Handshake} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <KPICard label="Umsatz (Gewonnen)" value={formatCurrency(totalRevenue)} icon={BadgeEuro} />
         <KPICard label="Pipeline-Wert" value={formatCurrency(pipelineValue)} icon={Euro} />
+        <KPICard label="Gewichtete Pipeline" value={formatCurrency(weightedPipeline)} icon={TrendingUp} />
+        <KPICard label="Offene Deals" value={openDeals.length} icon={Handshake} />
+        <KPICard label="Kontakte gesamt" value={contactCount} icon={Users} />
         <KPICard label="Aktivitäten heute" value={activitiesToday} icon={CalendarCheck} />
       </div>
 
