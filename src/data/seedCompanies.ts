@@ -8,118 +8,161 @@ export interface SeedCompany {
     title: string;
     stage: "lead" | "qualified" | "proposal" | "negotiation" | "won" | "lost";
     value?: number;
+    probability?: number;
+  };
+  contact?: {
+    first_name: string;
+    last_name: string;
+    email?: string;
   };
   notes?: string;
 }
 
 export const seedCompanies: SeedCompany[] = [
-  // 1
+  // KUNDEN (Aktiv / Voice KI aktiv)
   {
-    name: "Solution Center Stuttgart",
+    name: "Athletic Solution Center Stuttgart",
     industry: "Sport & Fitness",
     city: "Stuttgart",
     status: "customer",
-    deal: { title: "Voice KI Assistent", stage: "won" },
+    deal: { title: "Voice KI Assistent", stage: "won", value: 1200, probability: 100 },
     notes: "Voice KI (LENA) aktiv. Blueprint + Angebot vorhanden.",
   },
-  // 2 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_2",
+    name: "Conplaning GmbH",
     industry: "IT & Beratung",
     status: "customer",
-    deal: { title: "Voice KI Assistent", stage: "won" },
+    deal: { title: "Voice KI Assistent", stage: "won", value: 1500, probability: 100 },
     notes: "Voice KI Prompt + Blueprint/Präsentation vorhanden.",
   },
-  // 3 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_3",
+    name: "MVZ Nellingen",
     industry: "Gesundheit & Medizin",
     city: "Nellingen",
     status: "customer",
-    deal: { title: "Voice KI Assistent", stage: "won" },
-    notes: "Voice KI (LENA) aktiv.",
+    deal: { title: "Voice KI Assistent", stage: "won", value: 900, probability: 100 },
+    notes: "Voice KI (LENA) aktiv. Blueprint vorhanden.",
   },
-  // 4 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_4",
+    name: "Reinker Reha-Zentrum Markkleeberg",
     industry: "Gesundheit & Rehabilitation",
     city: "Markkleeberg",
     status: "customer",
-    deal: { title: "Voice KI Assistent", stage: "won" },
+    deal: { title: "Voice KI Assistent", stage: "won", value: 1200, probability: 100 },
     notes: "Voice KI (LISA) aktiv. Angebot + Blueprint + Präsentation vorhanden.",
   },
-  // 5 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_5",
-    industry: "Coaching & Bildung",
+    name: "Relife Academy",
+    industry: "Bildung & Coaching",
     status: "customer",
-    deal: { title: "n8n Automatisierung", stage: "won" },
+    deal: { title: "n8n Automatisierung", stage: "won", value: 900, probability: 100 },
     notes: "Ablefy Onboarding Automation aktiv.",
   },
-  // 6 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_6",
-    industry: "Design & Kreativagentur",
+    name: "SJ Design",
+    industry: "Design & Marketing",
     status: "customer",
-    deal: { title: "n8n Automatisierung", stage: "won" },
+    deal: { title: "n8n Automatisierung", stage: "won", value: 900, probability: 100 },
     notes: "WhatsApp Bot + Rechnungseingang-Verarbeitung aktiv.",
   },
-  // 7 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_7",
+    name: "VFB Rehawelt",
     industry: "Gesundheit & Rehabilitation",
-    status: "prospect",
-    deal: { title: "Voice KI Assistent", stage: "proposal" },
-    notes: "Blueprint + KI Telefonie Präsentation erstellt.",
+    status: "customer",
+    deal: { title: "Voice KI Assistent", stage: "won", value: 1500, probability: 100 },
+    notes: "Blueprint + KI Telefonie Präsentation erstellt. Aktiv.",
   },
-  // 8 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_8",
+    name: "Versicherung Frey",
     industry: "Versicherung & Finanzen",
     status: "customer",
-    deal: { title: "n8n Automatisierung", stage: "won" },
+    deal: { title: "n8n Automatisierung", stage: "won", value: 900, probability: 100 },
     notes: "Outreach Bot aktiv. Onboarding abgeschlossen.",
   },
-  // 9
   {
-    name: "factonet (PCA Partners)",
-    industry: "Beratung & Forschungsförderung",
+    name: "factonet",
+    industry: "IT & Beratung",
     website: "https://factonet.de",
     status: "customer",
-    deal: { title: "Meta Ads + n8n Automation + Landing Page", stage: "won", value: 1000 },
-    notes: "Strategische Partnerschaft. ASP: Constantin Seretoulis. Setup-Fee €1.000. €250/qualif. Lead + 5% Revenue Share. 3 n8n Workflows aktiv.",
+    deal: { title: "Meta Ads + n8n Automation + Landing Page", stage: "won", value: 1800, probability: 100 },
+    contact: { first_name: "Constantin", last_name: "Seretoulis" },
+    notes: "Strategische Partnerschaft. Setup-Fee €1.000. €250/qualif. Lead + 5% Revenue Share. 3 n8n Workflows aktiv.",
   },
-  // 10 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_10",
+    name: "ulco GmbH",
     industry: "Sonstiges",
     status: "customer",
-    deal: { title: "Onboarding", stage: "won" },
+    deal: { title: "Onboarding", stage: "won", value: 900, probability: 100 },
     notes: "Onboarding abgeschlossen.",
   },
-  // 11 – FIRMENNAME FEHLT
   {
-    name: "FIRMA_11",
-    industry: "Web & Digitalagentur",
+    name: "webwerkerei",
+    industry: "IT & Web",
     status: "customer",
-    deal: { title: "n8n Automatisierung", stage: "won" },
+    deal: { title: "n8n Automatisierung", stage: "won", value: 600, probability: 100 },
     notes: "SEO-Automation. Anleitung vorhanden.",
   },
-  // 13
+
+  // INTERESSENTEN (In Bearbeitung)
   {
-    name: "FIRMA_13",
+    name: "HNO Baumann Nürtingen",
+    industry: "Gesundheit & HNO",
+    city: "Nürtingen",
+    status: "prospect",
+    deal: { title: "Voice KI Assistent", stage: "proposal", value: 1200, probability: 50 },
+    notes: "Blueprint vorhanden. In Bearbeitung.",
+  },
+  {
+    name: "Smart Dental Ulm",
+    industry: "Gesundheit & Zahnarzt",
+    city: "Ulm",
+    status: "prospect",
+    deal: { title: "Voice KI Assistent", stage: "proposal", value: 1200, probability: 50 },
+    notes: "3 Blueprint-Versionen vorhanden. In Bearbeitung.",
+  },
+  {
+    name: "Zahnarzt Dr. Guter",
     industry: "Gesundheit & Zahnarzt",
     status: "prospect",
-    deal: { title: "Voice KI Assistent", stage: "proposal" },
-    notes: "Blueprint vorhanden.",
+    deal: { title: "Voice KI Assistent", stage: "proposal", value: 900, probability: 50 },
+    notes: "Blueprint vorhanden. In Bearbeitung.",
   },
-  // 14
   {
-    name: "FIRMA_14",
+    name: "Zahnarzt Dr. Schmid",
     industry: "Gesundheit & Kieferorthopädie",
     status: "prospect",
-    deal: { title: "Voice KI Assistent", stage: "proposal" },
+    deal: { title: "Voice KI Assistent", stage: "proposal", value: 900, probability: 50 },
     notes: "Blueprint + System Prompt erstellt.",
   },
-  // === FIRMEN 15-19 FEHLEN NOCH ===
+  {
+    name: "schreinerei krickl",
+    industry: "Handwerk & Schreinerei",
+    status: "prospect",
+    deal: { title: "Voice KI Assistent", stage: "proposal", value: 900, probability: 50 },
+    notes: "In Bearbeitung. Noch keine Dateien.",
+  },
+
+  // LEADS (Leerer Ordner / Erstkontakt)
+  {
+    name: "Augenärzte Im Basteicenter",
+    industry: "Gesundheit & Augenheilkunde",
+    status: "lead",
+    deal: { title: "Voice KI Assistent", stage: "lead", value: 900, probability: 10 },
+    notes: "Erstkontakt. Noch kein Material.",
+  },
+  {
+    name: "Dr. Schmid Zahnarzt Laichingen",
+    industry: "Gesundheit & Zahnarzt",
+    city: "Laichingen",
+    status: "lead",
+    deal: { title: "Voice KI Assistent", stage: "lead", value: 900, probability: 10 },
+    notes: "Erstkontakt. Noch kein Material.",
+  },
+  {
+    name: "Frau vom Fliesenleger",
+    industry: "Handwerk & Fliesen",
+    status: "lead",
+    deal: { title: "Voice KI Assistent", stage: "lead", value: 600, probability: 10 },
+    notes: "Erstkontakt. Noch kein Material.",
+  },
 ];

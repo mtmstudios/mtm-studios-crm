@@ -27,15 +27,36 @@ export async function runSeed(userId: string): Promise<{ companiesInserted: numb
 
     companiesInserted++;
 
+    // Insert contact if present
+    let contactId: string | null = null;
+    if (sc.contact) {
+      const { data: contact, error: contactError } = await supabase
+        .from("contacts")
+        .insert({
+          first_name: sc.contact.first_name,
+          last_name: sc.contact.last_name,
+          email: sc.contact.email || null,
+          company_id: company.id,
+          owner_id: userId,
+        })
+        .select("id")
+        .single();
+      if (!contactError && contact) contactId = contact.id;
+    }
+
     // Insert deal if present
     if (sc.deal) {
+      const stageProbability: Record<string, number> = {
+        won: 100, negotiation: 75, proposal: 50, qualified: 25, lead: 10, lost: 0,
+      };
       const { error: dealError } = await supabase.from("deals").insert({
         title: sc.deal.title,
         stage: sc.deal.stage,
         value: sc.deal.value ?? 0,
         company_id: company.id,
+        contact_id: contactId,
         owner_id: userId,
-        probability: sc.deal.stage === "won" ? 100 : sc.deal.stage === "lost" ? 0 : 50,
+        probability: sc.deal.probability ?? stageProbability[sc.deal.stage] ?? 0,
       });
 
       if (dealError) {
