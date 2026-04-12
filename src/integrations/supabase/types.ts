@@ -89,7 +89,6 @@ export type Database = {
           notes: string | null
           owner_id: string
           size: Database["public"]["Enums"]["company_size"] | null
-          status: Database["public"]["Enums"]["contact_status"]
           website: string | null
         }
         Insert: {
@@ -102,7 +101,6 @@ export type Database = {
           notes?: string | null
           owner_id: string
           size?: Database["public"]["Enums"]["company_size"] | null
-          status?: Database["public"]["Enums"]["contact_status"]
           website?: string | null
         }
         Update: {
@@ -115,7 +113,6 @@ export type Database = {
           notes?: string | null
           owner_id?: string
           size?: Database["public"]["Enums"]["company_size"] | null
-          status?: Database["public"]["Enums"]["contact_status"]
           website?: string | null
         }
         Relationships: []
