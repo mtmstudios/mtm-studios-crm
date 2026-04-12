@@ -22,8 +22,8 @@ export default function ContactList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
@@ -32,8 +32,8 @@ export default function ContactList() {
     queryFn: async () => {
       let q = supabase.from("contacts").select("*, companies(name)").order("created_at", { ascending: false });
       if (debouncedSearch) q = q.or(`first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`);
-      if (statusFilter !== "all") q = q.eq("status", statusFilter);
-      if (sourceFilter !== "all") q = q.eq("source", sourceFilter);
+      if (statusFilter !== "all") q = q.eq("status", statusFilter as any);
+      if (sourceFilter !== "all") q = q.eq("source", sourceFilter as any);
       const { data, error } = await q;
       if (error) throw error;
       return data || [];

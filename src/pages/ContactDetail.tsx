@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +51,7 @@ export default function ContactDetail() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: any) => {
       const { error } = await supabase.from("contacts").update(updates).eq("id", id!);
       if (error) throw error;
     },
