@@ -1,12 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { KPICard } from "@/components/crm/KPICard";
 import { StatusBadge } from "@/components/crm/StatusBadge";
-import { Users, Handshake, Euro, CalendarCheck, Mic, Phone, Clock } from "lucide-react";
+import { Users, Handshake, Euro, CalendarCheck, Mic, Phone, Clock, Upload } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { useState } from "react";
+import { runSeed } from "@/lib/seedDatabase";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const stageLabels: Record<string, string> = {
   lead: "Lead", qualified: "Qualifiziert", proposal: "Angebot",
