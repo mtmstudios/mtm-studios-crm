@@ -10,11 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Handshake, GripVertical } from "lucide-react";
+import { Plus, Handshake } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from "@dnd-kit/core";
 
 const stages = ["lead", "qualified", "proposal", "negotiation", "won", "lost"] as const;
 const stageLabels: Record<string, string> = {
@@ -26,12 +24,25 @@ function formatCurrency(v: number) {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(v);
 }
 
-function DealCard({ deal, onClick }: { deal: any; onClick: () => void }) {
+function DealCard({ deal, onClick, dragging }: { deal: any; onClick: () => void; dragging?: boolean }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: deal.id });
+  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 50 } : undefined;
+
   return (
-    <div onClick={onClick} className="bg-surface rounded-lg border border-border p-3 cursor-pointer hover:border-primary/30 transition-colors mb-2">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      className={`bg-surface rounded-lg border p-3 cursor-grab active:cursor-grabbing hover:border-primary/30 transition-colors mb-2 select-none ${dragging ? "opacity-50 border-primary/50" : "border-border"}`}
+    >
       <p className="text-sm text-foreground font-medium truncate">{deal.title}</p>
       {deal.contacts && (
         <p className="text-xs text-secondary-foreground mt-0.5">{deal.contacts.first_name} {deal.contacts.last_name}</p>
+      )}
+      {deal.companies && !deal.contacts && (
+        <p className="text-xs text-secondary-foreground mt-0.5">{deal.companies.name}</p>
       )}
       <div className="flex items-center justify-between mt-2">
         <span className="text-sm text-primary font-medium">{formatCurrency(Number(deal.value))}</span>
@@ -44,11 +55,37 @@ function DealCard({ deal, onClick }: { deal: any; onClick: () => void }) {
   );
 }
 
+function KanbanColumn({ stage, label, deals, onDealClick }: { stage: string; label: string; deals: any[]; onDealClick: (id: string) => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const totalValue = deals.reduce((s, d) => s + Number(d.value), 0);
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`bg-card rounded-lg border p-3 min-w-[200px] flex flex-col transition-colors ${isOver ? "border-primary/60 bg-primary/5" : "border-border"}`}
+    >
+      <div className="mb-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-medium text-foreground uppercase">{label}</h3>
+          <span className="text-xs text-muted-foreground">{deals.length}</span>
+        </div>
+        <p className="text-xs text-primary font-medium">{formatCurrency(totalValue)}</p>
+      </div>
+      <div className="flex-1 min-h-[60px]">
+        {deals.map((deal) => (
+          <DealCard key={deal.id} deal={deal} onClick={() => onDealClick(deal.id)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DealPipeline() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [activeDealId, setActiveDealId] = useState<string | null>(null);
 
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ["deals"],
@@ -97,17 +134,23 @@ export default function DealPipeline() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const handleDragStart = (event: any) => setActiveDealId(String(event.active.id));
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDealId(null);
     const { active, over } = event;
     if (!over) return;
     const overId = String(over.id);
-    // Check if dropped on a stage column
     if (stages.includes(overId as any)) {
-      updateStageMutation.mutate({ dealId: String(active.id), stage: overId });
+      const deal = deals.find((d) => d.id === String(active.id));
+      if (deal && deal.stage !== overId) {
+        updateStageMutation.mutate({ dealId: String(active.id), stage: overId });
+      }
     }
   };
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const activeDeal = activeDealId ? deals.find((d) => d.id === activeDealId) : null;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -153,32 +196,29 @@ export default function DealPipeline() {
       {deals.length === 0 && !isLoading ? (
         <EmptyState icon={Handshake} title="Keine Deals" description="Erstelle deinen ersten Deal, um die Pipeline zu füllen." />
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 overflow-x-auto">
-            {stages.map((stage) => {
-              const stageDeals = deals.filter((d) => d.stage === stage);
-              const totalValue = stageDeals.reduce((s, d) => s + Number(d.value), 0);
-              return (
-                <div key={stage} id={stage} className="bg-card rounded-lg border border-border p-3 min-w-[200px]">
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-medium text-foreground uppercase">{stageLabels[stage]}</h3>
-                      <span className="text-xs text-muted-foreground">{stageDeals.length}</span>
-                    </div>
-                    <p className="text-xs text-primary font-medium">{formatCurrency(totalValue)}</p>
-                  </div>
-                  <div className="space-y-0 min-h-[60px]"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => {}}
-                  >
-                    {stageDeals.map((deal) => (
-                      <DealCard key={deal.id} deal={deal} onClick={() => navigate(`/deals/${deal.id}`)} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {stages.map((stage) => (
+              <KanbanColumn
+                key={stage}
+                stage={stage}
+                label={stageLabels[stage]}
+                deals={deals.filter((d) => d.stage === stage)}
+                onDealClick={(id) => navigate(`/deals/${id}`)}
+              />
+            ))}
           </div>
+          <DragOverlay>
+            {activeDeal ? (
+              <div className="bg-surface rounded-lg border border-primary/60 p-3 w-[200px] shadow-xl opacity-95">
+                <p className="text-sm text-foreground font-medium truncate">{activeDeal.title}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm text-primary font-medium">{formatCurrency(Number(activeDeal.value))}</span>
+                  <span className="text-xs text-muted-foreground">{activeDeal.probability}%</span>
+                </div>
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       )}
     </div>
