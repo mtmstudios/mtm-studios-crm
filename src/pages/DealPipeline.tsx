@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Handshake } from "lucide-react";
+import { AutomationManager } from "@/components/crm/AutomationManager";
 import { useNavigate } from "react-router-dom";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from "@dnd-kit/core";
 
@@ -77,6 +78,7 @@ function KanbanColumn({ stage, label, deals, onDealClick }: { stage: string; lab
           <DealCard key={deal.id} deal={deal} onClick={() => onDealClick(deal.id)} />
         ))}
       </div>
+      <AutomationManager stage={stage} stageLabel={label} />
     </div>
   );
 }
