@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, Handshake, CalendarCheck, Mic, Calendar, MessageSquare, Star, Camera, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Handshake, CalendarCheck, Mic, Calendar, MessageSquare, Star, Camera, ScanLine, Menu, X, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +14,12 @@ const navItems = [
   { to: "/reputation", icon: Star, label: "Reputation" },
   { to: "/activities", icon: CalendarCheck, label: "Aktivitäten" },
   { to: "/voice-leads", icon: Mic, label: "Voice Leads" },
+  { to: "/scan", icon: ScanLine, label: "Scan & Import" },
   { to: "/snapshots", icon: Camera, label: "Snapshots" },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
+  const { user, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
@@ -62,11 +65,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
-              U
+              {user?.email?.[0]?.toUpperCase() || "U"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-foreground truncate">Benutzer</p>
+              <p className="text-xs text-foreground truncate">{user?.email || "Benutzer"}</p>
             </div>
+            <button onClick={() => signOut()} className="text-muted-foreground hover:text-foreground">
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </aside>

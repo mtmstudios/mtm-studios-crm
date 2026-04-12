@@ -22,6 +22,19 @@ const statusColors: Record<string, string> = {
   appointment: "bg-emerald-500/20 text-emerald-400",
   callback: "bg-amber-500/20 text-amber-400",
   other: "bg-zinc-500/20 text-zinc-400",
+  // Appointment statuses
+  scheduled: "bg-blue-500/20 text-blue-400",
+  confirmed: "bg-emerald-500/20 text-emerald-400",
+  completed: "bg-emerald-500/20 text-emerald-400",
+  cancelled: "bg-red-500/20 text-red-400",
+  // Message statuses
+  sent: "bg-blue-500/20 text-blue-400",
+  delivered: "bg-emerald-500/20 text-emerald-400",
+  read: "bg-emerald-500/20 text-emerald-400",
+  failed: "bg-red-500/20 text-red-400",
+  // Review request statuses
+  pending: "bg-yellow-500/20 text-yellow-400",
+  declined: "bg-red-500/20 text-red-400",
 };
 
 const labelMap: Record<string, string> = {
@@ -46,6 +59,19 @@ const labelMap: Record<string, string> = {
   appointment: "Termin",
   callback: "Rückruf",
   other: "Sonstiges",
+  // Appointment statuses
+  scheduled: "Geplant",
+  confirmed: "Bestätigt",
+  completed: "Abgeschlossen",
+  cancelled: "Abgesagt",
+  // Message statuses
+  sent: "Gesendet",
+  delivered: "Zugestellt",
+  read: "Gelesen",
+  failed: "Fehlgeschlagen",
+  // Review request statuses
+  pending: "Ausstehend",
+  declined: "Abgelehnt",
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {
