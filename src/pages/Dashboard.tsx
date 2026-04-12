@@ -1,12 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { KPICard } from "@/components/crm/KPICard";
 import { StatusBadge } from "@/components/crm/StatusBadge";
-import { Users, Handshake, Euro, CalendarCheck, Mic, Phone, Clock } from "lucide-react";
+import { Users, Handshake, Euro, CalendarCheck, Mic, Phone, Clock, Upload } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { useState } from "react";
+import { runSeed } from "@/lib/seedDatabase";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const stageLabels: Record<string, string> = {
   lead: "Lead", qualified: "Qualifiziert", proposal: "Angebot",
@@ -20,6 +24,30 @@ function formatCurrency(value: number) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [seeding, setSeeding] = useState(false);
+
+  const { data: companyCount = 0 } = useQuery({
+    queryKey: ["companies-count"],
+    queryFn: async () => {
+      const { count } = await supabase.from("companies").select("*", { count: "exact", head: true });
+      return count || 0;
+    },
+  });
+
+  const handleSeed = async () => {
+    if (!user) return;
+    setSeeding(true);
+    try {
+      const result = await runSeed(user.id);
+      toast.success(`${result.companiesInserted} Unternehmen und ${result.dealsInserted} Deals importiert`);
+      queryClient.invalidateQueries();
+    } catch (e: any) {
+      toast.error("Import fehlgeschlagen: " + e.message);
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const { data: contactCount = 0 } = useQuery({
     queryKey: ["contacts-count"],
@@ -95,7 +123,15 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+        {companyCount === 0 && (
+          <Button onClick={handleSeed} disabled={seeding} size="sm" variant="outline" className="gap-2">
+            <Upload className="h-4 w-4" />
+            {seeding ? "Importiere..." : "Daten importieren"}
+          </Button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard label="Kontakte gesamt" value={contactCount} icon={Users} />
