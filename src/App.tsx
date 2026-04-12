@@ -46,6 +46,8 @@ const App = () => (
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/activities" element={<ActivityList />} />
                   <Route path="/voice-leads" element={<VoiceLeads />} />
+                  <Route path="/reputation" element={<Reputation />} />
+                  <Route path="/snapshots" element={<Snapshots />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AppLayout>
