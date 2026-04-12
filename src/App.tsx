@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import ContactList from "@/pages/ContactList";
@@ -21,20 +22,22 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <BrowserRouter>
-        <AppLayout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/contacts" element={<ContactList />} />
-            <Route path="/contacts/:id" element={<ContactDetail />} />
-            <Route path="/companies" element={<CompanyList />} />
-            <Route path="/companies/:id" element={<CompanyDetail />} />
-            <Route path="/deals" element={<DealPipeline />} />
-            <Route path="/deals/:id" element={<DealDetail />} />
-            <Route path="/activities" element={<ActivityList />} />
-            <Route path="/voice-leads" element={<VoiceLeads />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AppLayout>
+        <AuthProvider>
+          <AppLayout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/contacts" element={<ContactList />} />
+              <Route path="/contacts/:id" element={<ContactDetail />} />
+              <Route path="/companies" element={<CompanyList />} />
+              <Route path="/companies/:id" element={<CompanyDetail />} />
+              <Route path="/deals" element={<DealPipeline />} />
+              <Route path="/deals/:id" element={<DealDetail />} />
+              <Route path="/activities" element={<ActivityList />} />
+              <Route path="/voice-leads" element={<VoiceLeads />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppLayout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
