@@ -13,6 +13,8 @@ import DealPipeline from "@/pages/DealPipeline";
 import DealDetail from "@/pages/DealDetail";
 import ActivityList from "@/pages/ActivityList";
 import VoiceLeads from "@/pages/VoiceLeads";
+import Appointments from "@/pages/Appointments";
+import BookingPage from "@/pages/BookingPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,20 +25,28 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppLayout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/contacts" element={<ContactList />} />
-              <Route path="/contacts/:id" element={<ContactDetail />} />
-              <Route path="/companies" element={<CompanyList />} />
-              <Route path="/companies/:id" element={<CompanyDetail />} />
-              <Route path="/deals" element={<DealPipeline />} />
-              <Route path="/deals/:id" element={<DealDetail />} />
-              <Route path="/activities" element={<ActivityList />} />
-              <Route path="/voice-leads" element={<VoiceLeads />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AppLayout>
+          <Routes>
+            {/* Public booking page - outside AppLayout */}
+            <Route path="/book/:slug" element={<BookingPage />} />
+            {/* App routes */}
+            <Route path="/*" element={
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/contacts" element={<ContactList />} />
+                  <Route path="/contacts/:id" element={<ContactDetail />} />
+                  <Route path="/companies" element={<CompanyList />} />
+                  <Route path="/companies/:id" element={<CompanyDetail />} />
+                  <Route path="/deals" element={<DealPipeline />} />
+                  <Route path="/deals/:id" element={<DealDetail />} />
+                  <Route path="/appointments" element={<Appointments />} />
+                  <Route path="/activities" element={<ActivityList />} />
+                  <Route path="/voice-leads" element={<VoiceLeads />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
+            } />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
