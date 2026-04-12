@@ -274,6 +274,53 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          channel: Database["public"]["Enums"]["conversation_channel"]
+          contact_id: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          owner_id: string
+          unread_count: number
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["conversation_channel"]
+          contact_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          owner_id: string
+          unread_count?: number
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["conversation_channel"]
+          contact_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          owner_id?: string
+          unread_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           close_date: string | null
@@ -333,6 +380,44 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          direction: Database["public"]["Enums"]["message_direction"]
+          external_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["message_status"]
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          direction: Database["public"]["Enums"]["message_direction"]
+          external_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["message_status"]
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          direction?: Database["public"]["Enums"]["message_direction"]
+          external_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["message_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -438,6 +523,7 @@ export type Database = {
       company_size: "startup" | "smb" | "mid_market" | "enterprise"
       contact_source: "manual" | "voice_ai" | "website" | "referral"
       contact_status: "lead" | "prospect" | "customer" | "inactive"
+      conversation_channel: "sms" | "whatsapp"
       deal_stage:
         | "lead"
         | "qualified"
@@ -445,6 +531,8 @@ export type Database = {
         | "negotiation"
         | "won"
         | "lost"
+      message_direction: "inbound" | "outbound"
+      message_status: "sent" | "delivered" | "read" | "failed"
       voice_lead_intent: "information" | "appointment" | "callback" | "other"
       voice_lead_status: "new" | "contacted" | "converted" | "dismissed"
     }
@@ -585,6 +673,7 @@ export const Constants = {
       company_size: ["startup", "smb", "mid_market", "enterprise"],
       contact_source: ["manual", "voice_ai", "website", "referral"],
       contact_status: ["lead", "prospect", "customer", "inactive"],
+      conversation_channel: ["sms", "whatsapp"],
       deal_stage: [
         "lead",
         "qualified",
@@ -593,6 +682,8 @@ export const Constants = {
         "won",
         "lost",
       ],
+      message_direction: ["inbound", "outbound"],
+      message_status: ["sent", "delivered", "read", "failed"],
       voice_lead_intent: ["information", "appointment", "callback", "other"],
       voice_lead_status: ["new", "contacted", "converted", "dismissed"],
     },
