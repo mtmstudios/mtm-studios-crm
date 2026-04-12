@@ -138,6 +138,41 @@ export default function DealPipeline() {
         contact_id: deal?.contact_id || null,
         owner_id: user!.id,
       });
+
+      // Execute automations for the new stage
+      const { data: automations } = await supabase
+        .from("pipeline_automations")
+        .select("*")
+        .eq("deal_stage", stage as any)
+        .eq("enabled", true);
+
+      if (automations && automations.length > 0) {
+        for (const auto of automations) {
+          const config = auto.action_config as Record<string, string>;
+          if (auto.action_type === "create_task") {
+            await supabase.from("activities").insert({
+              type: "task" as const,
+              title: config.task_title || "Automatische Aufgabe",
+              description: config.task_description || null,
+              deal_id: dealId,
+              company_id: deal?.company_id || null,
+              contact_id: deal?.contact_id || null,
+              owner_id: user!.id,
+            });
+          }
+          // Log automation execution
+          await supabase.from("activities").insert({
+            type: "note" as const,
+            title: `⚡ Automation: ${auto.name || auto.action_type}`,
+            description: `Aktion "${auto.action_type}" ausgeführt`,
+            deal_id: dealId,
+            company_id: deal?.company_id || null,
+            contact_id: deal?.contact_id || null,
+            owner_id: user!.id,
+          });
+        }
+        toast.info(`${automations.length} Automation(en) ausgeführt`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
