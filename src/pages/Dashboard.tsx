@@ -123,7 +123,15 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+        {companyCount === 0 && (
+          <Button onClick={handleSeed} disabled={seeding} size="sm" variant="outline" className="gap-2">
+            <Upload className="h-4 w-4" />
+            {seeding ? "Importiere..." : "Daten importieren"}
+          </Button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard label="Kontakte gesamt" value={contactCount} icon={Users} />
