@@ -14,6 +14,7 @@ import DealDetail from "@/pages/DealDetail";
 import ActivityList from "@/pages/ActivityList";
 import VoiceLeads from "@/pages/VoiceLeads";
 import Appointments from "@/pages/Appointments";
+import Inbox from "@/pages/Inbox";
 import BookingPage from "@/pages/BookingPage";
 import NotFound from "@/pages/NotFound";
 
@@ -40,6 +41,7 @@ const App = () => (
                   <Route path="/deals" element={<DealPipeline />} />
                   <Route path="/deals/:id" element={<DealDetail />} />
                   <Route path="/appointments" element={<Appointments />} />
+                  <Route path="/inbox" element={<Inbox />} />
                   <Route path="/activities" element={<ActivityList />} />
                   <Route path="/voice-leads" element={<VoiceLeads />} />
                   <Route path="*" element={<NotFound />} />

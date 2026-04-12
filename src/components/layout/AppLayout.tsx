@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, Handshake, CalendarCheck, Mic, Calendar, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Handshake, CalendarCheck, Mic, Calendar, MessageSquare, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,7 @@ const navItems = [
   { to: "/companies", icon: Building2, label: "Unternehmen" },
   { to: "/deals", icon: Handshake, label: "Deals" },
   { to: "/appointments", icon: Calendar, label: "Termine" },
+  { to: "/inbox", icon: MessageSquare, label: "Posteingang" },
   { to: "/activities", icon: CalendarCheck, label: "Aktivitäten" },
   { to: "/voice-leads", icon: Mic, label: "Voice Leads" },
 ];
