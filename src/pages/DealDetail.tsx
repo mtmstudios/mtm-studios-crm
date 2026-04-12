@@ -115,7 +115,7 @@ export default function DealDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-card border border-border">
+        <TabsList className="bg-card border border-border w-full sm:w-auto overflow-x-auto">
           <TabsTrigger value="overview" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Übersicht</TabsTrigger>
           <TabsTrigger value="activities" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Aktivitäten ({activities.length})</TabsTrigger>
         </TabsList>

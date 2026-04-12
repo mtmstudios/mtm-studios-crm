@@ -142,7 +142,7 @@ export default function ContactDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-card border border-border">
+        <TabsList className="bg-card border border-border w-full sm:w-auto overflow-x-auto">
           <TabsTrigger value="overview" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Übersicht</TabsTrigger>
           <TabsTrigger value="activities" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Aktivitäten ({activities.length})</TabsTrigger>
           <TabsTrigger value="deals" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Deals ({deals.length})</TabsTrigger>
@@ -202,7 +202,7 @@ export default function ContactDetail() {
               <DialogTrigger asChild>
                 <Button className="bg-primary text-primary-foreground rounded-md"><Plus className="h-4 w-4 mr-1" /> Aktivität hinzufügen</Button>
               </DialogTrigger>
-              <DialogContent className="bg-card border-border">
+              <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="text-foreground">Aktivität hinzufügen</DialogTitle></DialogHeader>
                 <form onSubmit={(e) => { e.preventDefault(); addActivityMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
                   <div><Label className="text-secondary-foreground">Typ</Label>

@@ -70,10 +70,10 @@ export default function VoiceLeads() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-foreground">Voice AI Leads</h1>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent className="bg-card border-border">
             <SelectItem value="all">Alle</SelectItem>
             <SelectItem value="new">Neu</SelectItem>

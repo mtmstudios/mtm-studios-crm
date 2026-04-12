@@ -67,7 +67,7 @@ export default function CompanyList() {
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"><Plus className="h-4 w-4 mr-1" /> Neues Unternehmen</Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-border">
+          <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle className="text-foreground">Neues Unternehmen</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
               <div><Label className="text-secondary-foreground">Name</Label><Input name="name" required className="bg-surface border-border rounded-md" /></div>
@@ -115,7 +115,7 @@ export default function CompanyList() {
           <Input placeholder="Unternehmen suchen..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 bg-card border-border rounded-md" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[150px] bg-card border-border rounded-md"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent className="bg-card border-border">
             <SelectItem value="all">Alle Status</SelectItem>
             <SelectItem value="lead">Lead</SelectItem>

@@ -99,7 +99,7 @@ export default function ActivityList() {
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"><Plus className="h-4 w-4 mr-1" /> Aktivität hinzufügen</Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-border">
+          <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle className="text-foreground">Neue Aktivität</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
               <div><Label className="text-secondary-foreground">Typ</Label>
@@ -112,7 +112,7 @@ export default function ActivityList() {
               </div>
               <div><Label className="text-secondary-foreground">Titel</Label><Input name="title" required className="bg-surface border-border rounded-md" /></div>
               <div><Label className="text-secondary-foreground">Beschreibung</Label><Textarea name="description" className="bg-surface border-border rounded-md" /></div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label className="text-secondary-foreground">Kontakt</Label>
                   <Select name="contact_id">
                     <SelectTrigger className="bg-surface border-border rounded-md"><SelectValue placeholder="Optional" /></SelectTrigger>
@@ -140,7 +140,7 @@ export default function ActivityList() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-card border border-border">
+        <TabsList className="bg-card border border-border w-full sm:w-auto overflow-x-auto">
           <TabsTrigger value="all" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Alle</TabsTrigger>
           <TabsTrigger value="today" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Heute fällig</TabsTrigger>
           <TabsTrigger value="overdue" className="data-[state=active]:bg-surface data-[state=active]:text-foreground text-muted-foreground">Überfällig</TabsTrigger>

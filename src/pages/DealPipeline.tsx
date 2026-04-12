@@ -36,7 +36,7 @@ function DealCard({ deal, onClick, dragging }: { deal: any; onClick: () => void;
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`bg-surface rounded-lg border p-3 cursor-grab active:cursor-grabbing hover:border-primary/30 transition-colors mb-2 select-none ${dragging ? "opacity-50 border-primary/50" : "border-border"}`}
+      className={`bg-surface rounded-lg border p-2 sm:p-3 cursor-grab active:cursor-grabbing hover:border-primary/30 transition-colors mb-2 select-none ${dragging ? "opacity-50 border-primary/50" : "border-border"}`}
     >
       <p className="text-sm text-foreground font-medium truncate">{deal.title}</p>
       {deal.companies && (
@@ -63,7 +63,7 @@ function KanbanColumn({ stage, label, deals, onDealClick }: { stage: string; lab
   return (
     <div
       ref={setNodeRef}
-      className={`bg-card rounded-lg border p-3 min-w-[200px] flex flex-col transition-colors ${isOver ? "border-primary/60 bg-primary/5" : "border-border"}`}
+      className={`bg-card rounded-lg border p-3 min-w-[160px] sm:min-w-[200px] flex flex-col transition-colors ${isOver ? "border-primary/60 bg-primary/5" : "border-border"}`}
     >
       <div className="mb-3">
         <div className="flex items-center justify-between">
@@ -204,7 +204,7 @@ export default function DealPipeline() {
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md"><Plus className="h-4 w-4 mr-1" /> Neuer Deal</Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-border">
+          <DialogContent className="bg-card border-border max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle className="text-foreground">Neuer Deal</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(new FormData(e.currentTarget)); }} className="space-y-3">
               <div><Label className="text-secondary-foreground">Titel</Label><Input name="title" required className="bg-surface border-border rounded-md" /></div>
@@ -249,7 +249,7 @@ export default function DealPipeline() {
         <EmptyState icon={Handshake} title="Keine Deals" description="Erstelle deinen ersten Deal, um die Pipeline zu füllen." />
       ) : (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="flex gap-3 overflow-x-auto pb-4">
+          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
             {stages.map((stage) => (
               <KanbanColumn
                 key={stage}
