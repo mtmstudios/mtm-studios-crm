@@ -78,6 +78,101 @@ export type Database = {
           },
         ]
       }
+      appointments: {
+        Row: {
+          booking_token: string | null
+          contact_email: string | null
+          contact_id: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          owner_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          title: string
+        }
+        Insert: {
+          booking_token?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          owner_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          title: string
+        }
+        Update: {
+          booking_token?: string | null
+          contact_email?: string | null
+          contact_id?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_settings: {
+        Row: {
+          available_days: number[]
+          booking_page_description: string | null
+          booking_page_slug: string | null
+          booking_page_title: string | null
+          created_at: string
+          end_hour: number
+          id: string
+          owner_id: string
+          slot_duration: number
+          start_hour: number
+        }
+        Insert: {
+          available_days?: number[]
+          booking_page_description?: string | null
+          booking_page_slug?: string | null
+          booking_page_title?: string | null
+          created_at?: string
+          end_hour?: number
+          id?: string
+          owner_id: string
+          slot_duration?: number
+          start_hour?: number
+        }
+        Update: {
+          available_days?: number[]
+          booking_page_description?: string | null
+          booking_page_slug?: string | null
+          booking_page_title?: string | null
+          created_at?: string
+          end_hour?: number
+          id?: string
+          owner_id?: string
+          slot_duration?: number
+          start_hour?: number
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           city: string | null
@@ -334,6 +429,7 @@ export type Database = {
     }
     Enums: {
       activity_type: "call" | "email" | "meeting" | "task" | "note"
+      appointment_status: "scheduled" | "completed" | "cancelled"
       automation_action_type:
         | "send_email"
         | "send_sms"
@@ -479,6 +575,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_type: ["call", "email", "meeting", "task", "note"],
+      appointment_status: ["scheduled", "completed", "cancelled"],
       automation_action_type: [
         "send_email",
         "send_sms",
