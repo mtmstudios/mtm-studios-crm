@@ -24,6 +24,30 @@ function formatCurrency(value: number) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [seeding, setSeeding] = useState(false);
+
+  const { data: companyCount = 0 } = useQuery({
+    queryKey: ["companies-count"],
+    queryFn: async () => {
+      const { count } = await supabase.from("companies").select("*", { count: "exact", head: true });
+      return count || 0;
+    },
+  });
+
+  const handleSeed = async () => {
+    if (!user) return;
+    setSeeding(true);
+    try {
+      const result = await runSeed(user.id);
+      toast.success(`${result.companiesInserted} Unternehmen und ${result.dealsInserted} Deals importiert`);
+      queryClient.invalidateQueries();
+    } catch (e: any) {
+      toast.error("Import fehlgeschlagen: " + e.message);
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const { data: contactCount = 0 } = useQuery({
     queryKey: ["contacts-count"],
