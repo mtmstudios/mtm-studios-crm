@@ -177,10 +177,10 @@ export default function Reputation() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard title="Ø Bewertung" value={String(avgRating)} icon={Star} />
-        <KPICard title="Bewertungen" value={String(totalReviews)} icon={MessageSquare} />
-        <KPICard title="Positiv-Rate" value={`${positiveRate}%`} icon={TrendingUp} />
-        <KPICard title="Offene Anfragen" value={String(pendingRequests)} icon={Users} />
+        <KPICard label="Ø Bewertung" value={String(avgRating)} icon={Star} />
+        <KPICard label="Bewertungen" value={String(totalReviews)} icon={MessageSquare} />
+        <KPICard label="Positiv-Rate" value={`${positiveRate}%`} icon={TrendingUp} />
+        <KPICard label="Offene Anfragen" value={String(pendingRequests)} icon={Users} />
       </div>
 
       <Tabs defaultValue="reviews">

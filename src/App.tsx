@@ -15,6 +15,8 @@ import ActivityList from "@/pages/ActivityList";
 import VoiceLeads from "@/pages/VoiceLeads";
 import Appointments from "@/pages/Appointments";
 import Inbox from "@/pages/Inbox";
+import Reputation from "@/pages/Reputation";
+import Snapshots from "@/pages/Snapshots";
 import BookingPage from "@/pages/BookingPage";
 import NotFound from "@/pages/NotFound";
 

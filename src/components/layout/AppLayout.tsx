@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, Handshake, CalendarCheck, Mic, Calendar, MessageSquare, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Handshake, CalendarCheck, Mic, Calendar, MessageSquare, Star, Camera, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -10,8 +10,10 @@ const navItems = [
   { to: "/deals", icon: Handshake, label: "Deals" },
   { to: "/appointments", icon: Calendar, label: "Termine" },
   { to: "/inbox", icon: MessageSquare, label: "Posteingang" },
+  { to: "/reputation", icon: Star, label: "Reputation" },
   { to: "/activities", icon: CalendarCheck, label: "Aktivitäten" },
   { to: "/voice-leads", icon: Mic, label: "Voice Leads" },
+  { to: "/snapshots", icon: Camera, label: "Snapshots" },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
