@@ -13,6 +13,7 @@ export async function runSeed(userId: string): Promise<{ companiesInserted: numb
         name: sc.name,
         industry: sc.industry || null,
         city: sc.city || null,
+        website: sc.website || null,
         notes: sc.notes || null,
         owner_id: userId,
       })
