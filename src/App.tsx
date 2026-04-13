@@ -24,19 +24,7 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoutes() {
-  const { session, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-primary text-lg font-medium">Laden...</div>
-      </div>
-    );
-  }
-
-  if (!session) return <Navigate to="/auth" replace />;
-
+function AppRoutes() {
   return (
     <AppLayout>
       <Routes>
@@ -58,13 +46,6 @@ function ProtectedRoutes() {
       </Routes>
     </AppLayout>
   );
-}
-
-function AuthRoute() {
-  const { session, loading } = useAuth();
-  if (loading) return null;
-  if (session) return <Navigate to="/" replace />;
-  return <AuthPage />;
 }
 
 const App = () => (
