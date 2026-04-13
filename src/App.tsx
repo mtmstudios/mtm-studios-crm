@@ -55,11 +55,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public routes */}
-            <Route path="/auth" element={<AuthRoute />} />
             <Route path="/book/:slug" element={<BookingPage />} />
-            {/* Protected routes */}
-            <Route path="/*" element={<ProtectedRoutes />} />
+            <Route path="/*" element={<AppRoutes />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
