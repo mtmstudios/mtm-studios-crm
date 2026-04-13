@@ -24,19 +24,7 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoutes() {
-  const { session, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-primary text-lg font-medium">Laden...</div>
-      </div>
-    );
-  }
-
-  if (!session) return <Navigate to="/auth" replace />;
-
+function AppRoutes() {
   return (
     <AppLayout>
       <Routes>
@@ -60,13 +48,6 @@ function ProtectedRoutes() {
   );
 }
 
-function AuthRoute() {
-  const { session, loading } = useAuth();
-  if (loading) return null;
-  if (session) return <Navigate to="/" replace />;
-  return <AuthPage />;
-}
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -74,11 +55,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public routes */}
-            <Route path="/auth" element={<AuthRoute />} />
             <Route path="/book/:slug" element={<BookingPage />} />
-            {/* Protected routes */}
-            <Route path="/*" element={<ProtectedRoutes />} />
+            <Route path="/*" element={<AppRoutes />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
