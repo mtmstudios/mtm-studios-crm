@@ -5,7 +5,19 @@ export async function runSeed(userId: string): Promise<{ companiesInserted: numb
   let companiesInserted = 0;
   let dealsInserted = 0;
 
+  // Fetch existing company names to avoid duplicates
+  const { data: existingCompanies } = await supabase
+    .from("companies")
+    .select("name")
+    .eq("owner_id", userId);
+  const existingNames = new Set((existingCompanies || []).map((c) => c.name.toLowerCase()));
+
   for (const sc of seedCompanies) {
+    // Skip if company already exists
+    if (existingNames.has(sc.name.toLowerCase())) {
+      continue;
+    }
+
     // Insert company
     const { data: company, error: companyError } = await supabase
       .from("companies")
