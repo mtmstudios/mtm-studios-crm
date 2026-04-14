@@ -13,21 +13,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DUMMY_USER_ID = "00000000-0000-0000-0000-000000000001";
+const dummyUser = { id: DUMMY_USER_ID, email: "admin@mtm-studios.de" } as User;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  // No auth required — provide a dummy user for all queries
+  const user = session?.user ?? dummyUser;
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
