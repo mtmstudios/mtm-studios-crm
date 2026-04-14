@@ -119,6 +119,7 @@ export default function DealPipeline() {
 
   const updateStageMutation = useMutation({
     mutationFn: async ({ dealId, stage, lostReason }: { dealId: string; stage: string; lostReason?: string }) => {
+      if (!user) throw new Error("Nicht eingeloggt");
       const updates: any = { stage: stage as any };
       if (stage === "won") updates.close_date = new Date().toISOString().split("T")[0];
       if (stage === "lost" && lostReason) updates.lost_reason = lostReason;
@@ -136,7 +137,7 @@ export default function DealPipeline() {
         deal_id: dealId,
         company_id: deal?.company_id || null,
         contact_id: deal?.contact_id || null,
-        owner_id: user!.id,
+        owner_id: user.id,
       });
 
       // Execute automations for the new stage
@@ -157,7 +158,7 @@ export default function DealPipeline() {
               deal_id: dealId,
               company_id: deal?.company_id || null,
               contact_id: deal?.contact_id || null,
-              owner_id: user!.id,
+              owner_id: user.id,
             });
           }
           // Log automation execution
@@ -168,7 +169,7 @@ export default function DealPipeline() {
             deal_id: dealId,
             company_id: deal?.company_id || null,
             contact_id: deal?.contact_id || null,
-            owner_id: user!.id,
+            owner_id: user.id,
           });
         }
         toast.info(`${automations.length} Automation(en) ausgeführt`);
@@ -183,6 +184,7 @@ export default function DealPipeline() {
 
   const createMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      if (!user) throw new Error("Nicht eingeloggt");
       const { error } = await supabase.from("deals").insert({
         title: formData.get("title") as string,
         value: Number(formData.get("value")) || 0,
@@ -191,7 +193,7 @@ export default function DealPipeline() {
         close_date: formData.get("close_date") as string || null,
         contact_id: formData.get("contact_id") as string || null,
         company_id: formData.get("company_id") as string || null,
-        owner_id: user!.id,
+        owner_id: user.id,
       });
       if (error) throw error;
     },
