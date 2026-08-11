@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, ChevronsUpDown, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -35,6 +36,13 @@ interface Props<T> {
   selected?: Set<string>;
   onSelectedChange?(next: Set<string>): void;
   empty?: ReactNode;
+  /**
+   * Fehler der Abfrage. Muss durchgereicht werden — ohne ihn wäre eine
+   * fehlgeschlagene Abfrage von „keine Treffer" nicht zu unterscheiden, und
+   * genau das verschleiert echte Fehler.
+   */
+  error?: Error | null;
+  onRetry?(): void;
   /** Zeilen im Ladezustand */
   skeletonRows?: number;
 }
@@ -51,6 +59,8 @@ export function DataTable<T>({
   selected,
   onSelectedChange,
   empty,
+  error,
+  onRetry,
   skeletonRows = 8,
 }: Props<T>) {
   const selectable = !!selected && !!onSelectedChange;
@@ -73,6 +83,32 @@ export function DataTable<T>({
     else next.add(id);
     onSelectedChange!(next);
   };
+
+  // Ein Fehler hat Vorrang vor dem Leerzustand — sonst sieht ein Ausfall
+  // aus wie ein leerer Bestand.
+  if (error) {
+    return (
+      <div className="mx-auto max-w-lg px-6 py-16 text-center">
+        <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-full bg-destructive/10 text-destructive">
+          <AlertTriangle className="h-5 w-5" />
+        </span>
+        <h3 className="text-sm font-semibold">Daten konnten nicht geladen werden</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Die Abfrage wurde abgelehnt. Das liegt meist an fehlenden Rechten oder einer
+          Änderung am Datenmodell.
+        </p>
+        <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-md bg-secondary p-3 text-left text-xs text-muted-foreground">
+          {error.message}
+        </pre>
+        {onRetry && (
+          <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+            Erneut versuchen
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   if (!loading && rows.length === 0) {
     return <div className="py-16">{empty}</div>;

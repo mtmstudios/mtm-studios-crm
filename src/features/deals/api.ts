@@ -32,7 +32,7 @@ export const SORTABLE_DEAL_COLUMNS = [
 
 const SELECT =
   '*, contacts(id, full_name), companies(id, name), ' +
-  'owner:profiles!deals_owner_id_fkey(id, full_name), ' +
+  'owner:profiles!owner_id(id, full_name), ' +
   'stages(id, name, probability, rotting_days)';
 
 /* ---------------------------------------------------------------- Listen -- */
@@ -142,7 +142,7 @@ export function useDealStageHistory(dealId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('deal_stage_history')
-        .select('*, to_stage:stages!deal_stage_history_to_stage_id_fkey(name)')
+        .select('*, to_stage:stages!to_stage_id(name)')
         .eq('deal_id', dealId!)
         .order('changed_at', { ascending: false });
       if (error) throw error;

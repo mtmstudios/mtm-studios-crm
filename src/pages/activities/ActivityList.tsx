@@ -32,7 +32,7 @@ export default function ActivityList() {
   const { params, setSearch, setPage, setPageSize, toggleSort, setFilter, clearFilters, activeFilterCount } =
     useListParams('due_at', true);
 
-  const { data, isFetching } = useActivities(params);
+  const { data, isFetching, error, refetch } = useActivities(params);
   const { data: profiles = [] } = useProfiles();
   const toggle = useToggleActivity();
   const remove = useDeleteActivities();
@@ -181,6 +181,8 @@ export default function ActivityList() {
           columns={columns}
           rowId={(row) => row.id}
           loading={isFetching}
+          error={error as Error | null}
+          onRetry={() => void refetch()}
           sort={params.sort}
           asc={params.asc}
           onSort={toggleSort}

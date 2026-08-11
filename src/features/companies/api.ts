@@ -33,7 +33,7 @@ export function useCompanies(params: ListParams) {
       let query = supabase
         .from('companies')
         .select(
-          '*, owner:profiles!companies_owner_id_fkey(id, full_name), contacts(count)',
+          '*, owner:profiles!owner_id(id, full_name), contacts(count)',
           { count: 'exact' },
         );
 
@@ -68,7 +68,7 @@ export function useCompany(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
-        .select('*, owner:profiles!companies_owner_id_fkey(id, full_name)')
+        .select('*, owner:profiles!owner_id(id, full_name)')
         .eq('id', id!)
         .maybeSingle();
       if (error) throw error;

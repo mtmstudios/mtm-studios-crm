@@ -38,7 +38,7 @@ export default function ContactList() {
   const { params, setSearch, setPage, setPageSize, toggleSort, setFilter, clearFilters, activeFilterCount } =
     useListParams('created_at');
 
-  const { data, isFetching } = useContacts(params);
+  const { data, isFetching, error, refetch } = useContacts(params);
   const { data: profiles = [] } = useProfiles();
   const bulkUpdate = useBulkUpdateContacts();
   const remove = useDeleteContacts();
@@ -213,6 +213,8 @@ export default function ContactList() {
           columns={columns}
           rowId={(row) => row.id}
           loading={isFetching}
+          error={error as Error | null}
+          onRetry={() => void refetch()}
           sort={params.sort}
           asc={params.asc}
           onSort={toggleSort}

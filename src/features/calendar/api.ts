@@ -16,7 +16,7 @@ export type AppointmentRow = Appointment & {
 
 const SELECT =
   '*, contacts(id, full_name), companies(id, name), deals(id, title), ' +
-  'owner:profiles!appointments_owner_id_fkey(id, full_name)';
+  'owner:profiles!owner_id(id, full_name)';
 
 /** Termine in einem Zeitfenster — überlappende Termine zählen mit. */
 export function useAppointments(from: Date, to: Date, ownerId?: string | null) {

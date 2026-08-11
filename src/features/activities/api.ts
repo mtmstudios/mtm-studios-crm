@@ -18,7 +18,7 @@ export type ActivityRow = Activity & {
 
 const SELECT =
   '*, contacts(id, full_name), companies(id, name), deals(id, title), ' +
-  'owner:profiles!activities_owner_id_fkey(id, full_name)';
+  'owner:profiles!owner_id(id, full_name)';
 
 const FILTERABLE = ['type', 'owner_id', 'done'];
 
@@ -204,7 +204,7 @@ export function useTimeline(key: 'deal_id' | 'contact_id' | 'company_id', value:
       const [notes, activities] = await Promise.all([
         supabase
           .from('notes')
-          .select('*, author:profiles!notes_created_by_fkey(full_name)')
+          .select('*, author:profiles!created_by(full_name)')
           .eq(key, value!)
           .order('created_at', { ascending: false })
           .limit(100),
