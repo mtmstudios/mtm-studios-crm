@@ -1,305 +1,259 @@
 #!/usr/bin/env node
 /**
- * Kunden- und Kontaktdaten aus sevDesk ins CRM übernehmen.
+ * Übernimmt Rechnungsdaten aus sevDesk ins CRM.
  *
- *   node scripts/import-sevdesk.mjs              # Trockenlauf, schreibt nichts
- *   node scripts/import-sevdesk.mjs --apply      # schreibt tatsächlich
- *   node scripts/import-sevdesk.mjs --kategorie 3 --apply
+ *   node scripts/import-sevdesk.mjs           # Übersicht, schreibt nichts
+ *   node scripts/import-sevdesk.mjs --sql     # SQL auf stdout
  *
- * Läuft ausschließlich lokal. Die Daten landen direkt in Supabase und nie
- * im Repository.
+ * Braucht SEVDESK_API_TOKEN in .env (sevDesk → Einstellungen → Benutzer).
+ * Läuft lokal; Kundendaten landen nie im Repository.
  *
- * Benötigte Werte in .env:
- *   SEVDESK_API_TOKEN=...
- *   VITE_SUPABASE_URL=https://<ref>.supabase.co
- *   SUPABASE_SERVICE_ROLE_KEY=...      (Service-Rolle, nicht der Anon-Key)
+ * Der Bestand in sevDesk trägt die *Rechnungsnamen* ("factonet Holding GmbH"),
+ * das CRM die Arbeitsnamen ("factonet"). Deshalb wird nicht stumpf angelegt,
+ * sondern:
  *
- * Der Import ist wiederholbar: Datensätze werden über sevdesk_id abgeglichen,
- * ein zweiter Lauf legt keine Dubletten an, sondern aktualisiert.
+ *   - bekannte Entsprechungen (ZUORDNUNG) reichern die bestehende Firma an:
+ *     legal_name, Kundennummer, USt-IdNr., Anschrift, Telefon, E-Mail.
+ *     Der Anzeigename im CRM bleibt unangetastet.
+ *   - alles Übrige wird als neue Firma angelegt.
+ *   - AUSNAHMEN werden übersprungen, mit Begründung.
+ *
+ * Alle Anweisungen sind wiederholbar; bestehende Werte werden nur dort
+ * gesetzt, wo im CRM noch nichts steht (coalesce).
  */
 
-import { readFileSync, appendFileSync } from 'node:fs';
-import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'node:fs';
 
 const API = 'https://my.sevdesk.de/api/v1';
-const PAGE = 100;
-const PROTOCOL = 'sevdesk-import.jsonl';
+
+/**
+ * sevDesk-Kontakt-ID → bestehende CRM-Firma.
+ *
+ * Bewusst über die ID und nicht über den Namen: die Namen in sevDesk sind
+ * teils Rechnungsnamen, teils Textblöcke (siehe 129135224, dort steht die
+ * komplette Anschrift samt Telefon im Namensfeld). Die ID ist stabil.
+ *
+ * `legalName: null` unterdrückt die Übernahme des Rechnungsnamens dort, wo
+ * er unbrauchbar ist.
+ */
+const ZUORDNUNG = new Map([
+  [135710064, { crm: 'Conplaning GmbH' }],
+  [133455924, { crm: 'Deco & More' }],
+  [131914619, { crm: 'Autohaus Durst' }],
+  [131165802, { crm: 'Gemeinde Deizisau' }],
+  [129348883, { crm: 'factonet' }],
+  // Namensfeld enthält Anschrift + Telefon + E-Mail — nicht als legal_name
+  // übernehmen. Die Anschrift kommt sauber aus ContactAddress.
+  [129135224, { crm: 'SJ Design', legalName: 'SJ-Design' }],
+  // Über Info@schreinerei-krickl.de eindeutig belegt
+  [123342396, { crm: 'schreinerei krickl' }],
+  // Von Tim bestätigt: Rechnungsträger des Reha-Zentrums
+  [129133674, { crm: 'Reinker Reha-Zentrum Markkleeberg' }],
+]);
+
+/** Nicht ins CRM — mit Grund, damit später niemand rätselt. */
+const AUSNAHMEN = new Map([
+  [136195346, 'Meta Platforms Ireland Limited — Lieferant (Werbung), kein Kunde'],
+  [129133656, 'Reiner Med GmbH — Vertipper-Dublette von „Reinker Med GmbH", 10 s später angelegt'],
+]);
 
 /* ------------------------------------------------------------- Konfig -- */
 
-function loadEnv() {
+function ladeEnv() {
   try {
-    for (const line of readFileSync(new URL('../.env', import.meta.url), 'utf8').split('\n')) {
-      const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (!match) continue;
-      // Anführungszeichen entfernen, die manche Editoren mitschreiben
-      const value = match[2].replace(/^["']|["']$/g, '');
-      if (!process.env[match[1]]) process.env[match[1]] = value;
+    for (const zeile of readFileSync(new URL('../.env', import.meta.url), 'utf8').split('\n')) {
+      const m = zeile.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
     }
   } catch {
-    // .env ist optional, wenn die Werte schon in der Umgebung stehen
+    /* .env ist optional */
   }
 }
 
-loadEnv();
-
-const args = process.argv.slice(2);
-const APPLY = args.includes('--apply');
-const LIMIT = Number(args[args.indexOf('--limit') + 1]) || Infinity;
-const CATEGORY = args.includes('--kategorie')
-  ? String(args[args.indexOf('--kategorie') + 1])
-  : null;
+ladeEnv();
 
 const TOKEN = process.env.SEVDESK_API_TOKEN;
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 if (!TOKEN) {
-  console.error('SEVDESK_API_TOKEN fehlt. In .env eintragen (sevDesk → Einstellungen → Benutzer → API-Token).');
-  process.exit(1);
-}
-if (APPLY && (!SUPABASE_URL || !SERVICE_KEY)) {
-  console.error('Für --apply werden VITE_SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY benötigt.');
+  console.error('SEVDESK_API_TOKEN fehlt in .env.');
   process.exit(1);
 }
 
-/* --------------------------------------------------------- sevDesk API -- */
+const sqlModus = process.argv.includes('--sql');
+const q = (v) => (v === null || v === undefined || v === '' ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
+const putz = (v) => {
+  const s = (v ?? '').toString().trim();
+  return s === '' ? null : s;
+};
 
-async function sevdesk(path, params = {}) {
-  const url = new URL(API + path);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
+/* ---------------------------------------------------------- sevDesk API -- */
 
-  const res = await fetch(url, {
+async function hole(pfad) {
+  const res = await fetch(`${API}${pfad}?limit=500`, {
     headers: { Authorization: TOKEN, Accept: 'application/json' },
   });
-
-  if (!res.ok) {
-    throw new Error(`sevDesk ${path} → HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  }
+  if (!res.ok) throw new Error(`sevDesk ${pfad} → HTTP ${res.status}`);
   return (await res.json()).objects ?? [];
 }
 
-/** Alle Seiten einer Ressource holen. */
-async function fetchAll(path, params = {}, label = path) {
-  const out = [];
-  for (let offset = 0; ; offset += PAGE) {
-    const batch = await sevdesk(path, { ...params, limit: PAGE, offset });
-    out.push(...batch);
-    process.stdout.write(`\r  ${label}: ${out.length}`);
-    if (batch.length < PAGE || out.length >= LIMIT) break;
+/** Kommunikationswege bündeln; der als „main" markierte gewinnt. */
+function kommunikation(wege) {
+  const nachTyp = {};
+  for (const w of wege) {
+    const typ = (w.type ?? '').toUpperCase();
+    if (!nachTyp[typ] || String(w.main) === '1') nachTyp[typ] = putz(w.value);
   }
-  process.stdout.write('\n');
-  return out;
+  return {
+    email: nachTyp.EMAIL ?? null,
+    phone: nachTyp.PHONE ?? nachTyp.MOBILE ?? null,
+    website: nachTyp.WEB ?? null,
+  };
 }
-
-/* ---------------------------------------------------------- Zuordnung -- */
-
-const clean = (value) => {
-  const trimmed = (value ?? '').toString().trim();
-  return trimmed === '' ? null : trimmed;
-};
 
 /**
- * sevDesk kennt Organisationen und Personen in derselben Tabelle:
- * Organisationen haben `name`, Personen `surename`/`familyname`.
+ * Arbeitsname aus dem Rechnungsnamen ableiten. Bewusst nur zwei Regeln —
+ * mehr Automatik würde Namen verfälschen, die absichtlich so lauten.
  */
-const isOrganisation = (contact) =>
-  !clean(contact.surename) && !clean(contact.familyname) && !!clean(contact.name);
+function arbeitsname(name) {
+  return (
+    name
+      // "Räumzwerge Inh. Adem Kekec" → "Räumzwerge"
+      .replace(/\s+Inh\.\s+.*$/i, '')
+      // Angehängte Anschrift: "… Straße 17 73779 Ort"
+      .replace(/\s+\S*(?:straße|str\.)\s+\d+.*$/i, '')
+      .trim() || name
+  );
+}
 
-/** Kommunikationswege eines Kontakts nach Typ bündeln; „main" gewinnt. */
-function pickCommunication(ways) {
-  const byType = {};
-  for (const way of ways) {
-    const type = (way.type ?? '').toUpperCase();
-    // main === '1' markiert den bevorzugten Eintrag
-    if (!byType[type] || String(way.main) === '1') byType[type] = clean(way.value);
+/* --------------------------------------------------------------- Ablauf -- */
+
+const [kontakte, adressen, wege] = await Promise.all([
+  hole('/Contact'),
+  hole('/ContactAddress'),
+  hole('/CommunicationWay'),
+]);
+
+const gruppiere = (zeilen) => {
+  const map = new Map();
+  for (const z of zeilen) {
+    const id = z.contact?.id;
+    if (!id) continue;
+    (map.get(id) ?? map.set(id, []).get(id)).push(z);
   }
-  return {
-    email: byType.EMAIL ?? null,
-    phone: byType.PHONE ?? null,
-    mobile: byType.MOBILE ?? null,
-    website: byType.WEB ?? null,
+  return map;
+};
+
+const adressenVon = gruppiere(adressen);
+const wegeVon = gruppiere(wege);
+
+const zusammengefuehrt = [];
+const neu = [];
+const uebersprungen = [];
+
+for (const k of kontakte) {
+  const name = putz(k.name);
+  if (!name) continue;
+
+  const id = Number(k.id);
+
+  if (AUSNAHMEN.has(id)) {
+    uebersprungen.push({ grund: AUSNAHMEN.get(id) });
+    continue;
+  }
+
+  const eintrag = ZUORDNUNG.get(id);
+  const adresse = (adressenVon.get(k.id) ?? [])[0] ?? {};
+  const satz = {
+    // Ein `legalName` in der Zuordnung überschreibt den Rohnamen; null
+    // unterdrückt die Übernahme ganz.
+    legal_name: eintrag && 'legalName' in eintrag ? eintrag.legalName : name,
+    customer_number: putz(k.customerNumber),
+    vat_number: putz(k.vatNumber),
+    tax_number: putz(k.taxNumber),
+    street: putz(adresse.street),
+    zip: putz(adresse.zip),
+    city: putz(adresse.city),
+    sevdesk_id: String(k.id),
+    ...kommunikation(wegeVon.get(k.id) ?? []),
   };
+
+  if (eintrag) zusammengefuehrt.push({ ...satz, crm: eintrag.crm, quelle: name });
+  else neu.push({ ...satz, name: arbeitsname(name) });
 }
 
-function pickAddress(addresses) {
-  if (!addresses.length) return {};
-  // Die erste Adresse ist in sevDesk die Hauptadresse
-  const address = addresses[0];
-  return {
-    street: clean(address.street),
-    zip: clean(address.zip),
-    city: clean(address.city),
-  };
+/* ------------------------------------------------------------ Übersicht -- */
+
+if (!sqlModus) {
+  console.log(`sevDesk: ${kontakte.length} Datensätze\n`);
+
+  console.log(`An bestehende Firmen angehängt (${zusammengefuehrt.length}):`);
+  for (const z of zusammengefuehrt) {
+    console.log(`  ${z.crm.padEnd(36)} ← ${z.quelle.slice(0, 44)}`);
+  }
+
+  console.log(`\nNeu angelegt (${neu.length}):`);
+  for (const n of neu) {
+    const ort = [n.zip, n.city].filter(Boolean).join(' ');
+    console.log(`  KdNr ${String(n.customer_number ?? '—').padEnd(6)}${n.name.padEnd(30)}${ort || '—'}`);
+  }
+
+  console.log(`\nÜbersprungen (${uebersprungen.length}):`);
+  for (const u of uebersprungen) console.log(`  ${u.grund}`);
+
+  console.log('\nMit --sql das SQL erzeugen.');
+  process.exit(0);
 }
 
-/* ------------------------------------------------------------- Ablauf -- */
+/* ----------------------------------------------------------------- SQL -- */
 
-function log(entry) {
-  appendFileSync(PROTOCOL, JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n');
+const out = ['-- Aus sevDesk erzeugt. Nicht von Hand ändern.', 'begin;', ''];
+
+out.push('-- Bestehende Firmen um die Rechnungsdaten ergänzen.');
+out.push('-- coalesce: nur füllen, was im CRM noch leer ist.');
+for (const z of zusammengefuehrt) {
+  out.push(
+    `update public.companies set ` +
+      `legal_name = coalesce(legal_name, ${q(z.legal_name)}), ` +
+      `customer_number = coalesce(customer_number, ${q(z.customer_number)}), ` +
+      `vat_number = coalesce(vat_number, ${q(z.vat_number)}), ` +
+      `tax_number = coalesce(tax_number, ${q(z.tax_number)}), ` +
+      `street = coalesce(street, ${q(z.street)}), ` +
+      `zip = coalesce(zip, ${q(z.zip)}), ` +
+      `city = coalesce(city, ${q(z.city)}), ` +
+      `phone = coalesce(phone, ${q(z.phone)}), ` +
+      `email = coalesce(email, ${q(z.email)}), ` +
+      `sevdesk_id = coalesce(sevdesk_id, ${q(z.sevdesk_id)}), ` +
+      // Wer eine Rechnung bekommen hat, ist Kunde
+      `status = 'customer'::public.company_status ` +
+      `where lower(name) = lower(${q(z.crm)});`,
+  );
 }
+out.push('');
 
-async function main() {
-  console.log(APPLY ? '» Import (schreibend)\n' : '» Trockenlauf — es wird nichts geschrieben\n');
-
-  console.log('Lade aus sevDesk:');
-  const [contacts, addresses, communications] = await Promise.all([
-    fetchAll('/Contact', CATEGORY ? { 'category[id]': CATEGORY, 'category[objectName]': 'Category' } : {}, 'Kontakte'),
-    fetchAll('/ContactAddress', {}, 'Adressen'),
-    fetchAll('/CommunicationWay', {}, 'Kommunikationswege'),
-  ]);
-
-  // Nach Kontakt-ID gruppieren, damit die Zuordnung ohne N+1-Abfragen geht
-  const groupByContact = (rows) => {
-    const map = new Map();
-    for (const row of rows) {
-      const id = row.contact?.id;
-      if (!id) continue;
-      const list = map.get(id);
-      if (list) list.push(row);
-      else map.set(id, [row]);
-    }
-    return map;
-  };
-
-  const addressesBy = groupByContact(addresses);
-  const commsBy = groupByContact(communications);
-
-  const categories = {};
-  for (const contact of contacts) {
-    const key = contact.category?.id ?? 'ohne';
-    categories[key] = (categories[key] ?? 0) + 1;
-  }
-
-  const organisations = contacts.filter(isOrganisation);
-  const people = contacts.filter((c) => !isOrganisation(c));
-
-  console.log(`\nGefunden: ${contacts.length} Datensätze`);
-  console.log(`  Organisationen → Firmen:  ${organisations.length}`);
-  console.log(`  Personen       → Kontakte: ${people.length}`);
-  console.log(`  Kategorien (sevDesk-ID → Anzahl): ${JSON.stringify(categories)}`);
-  if (!CATEGORY) {
-    console.log('  Hinweis: mit --kategorie <id> lässt sich auf eine Kategorie einschränken.\n');
-  }
-
-  /* Firmen aufbereiten */
-  const companyRows = organisations.map((org) => {
-    const comm = pickCommunication(commsBy.get(org.id) ?? []);
-    return {
-      sevdesk_id: String(org.id),
-      name: clean(org.name),
-      customer_number: clean(org.customerNumber),
-      vat_number: clean(org.vatNumber),
-      tax_number: clean(org.taxNumber),
-      description: clean(org.description),
-      email: comm.email,
-      phone: comm.phone,
-      website: comm.website,
-      status: 'customer',
-      ...pickAddress(addressesBy.get(org.id) ?? []),
-    };
-  });
-
-  /* Personen aufbereiten */
-  const contactRows = people.map((person) => {
-    const comm = pickCommunication(commsBy.get(person.id) ?? []);
-    return {
-      sevdesk_id: String(person.id),
-      first_name: clean(person.surename),
-      last_name: clean(person.familyname),
-      academic_title: clean(person.academicTitle),
-      description: clean(person.description),
-      email: comm.email,
-      phone: comm.phone,
-      mobile: comm.mobile,
-      status: 'active',
-      // Wird nach dem Firmen-Import auf die CRM-UUID aufgelöst
-      _parentSevdeskId: person.parent?.id ? String(person.parent.id) : null,
-      ...pickAddress(addressesBy.get(person.id) ?? []),
-    };
-  });
-
-  const withoutName = contactRows.filter((c) => !c.first_name && !c.last_name);
-  if (withoutName.length) {
-    console.log(`  ${withoutName.length} Personen ohne Namen werden übersprungen.`);
-  }
-  const importableContacts = contactRows.filter((c) => c.first_name || c.last_name);
-
-  if (!APPLY) {
-    console.log('\nBeispiele:');
-    for (const row of companyRows.slice(0, 3)) {
-      console.log(`  Firma:   ${row.name} · ${row.city ?? '—'} · ${row.email ?? '—'}`);
-    }
-    for (const row of importableContacts.slice(0, 3)) {
-      console.log(
-        `  Kontakt: ${[row.first_name, row.last_name].filter(Boolean).join(' ')} · ${row.email ?? '—'}`,
-      );
-    }
-    console.log(
-      `\nWürde schreiben: ${companyRows.length} Firmen, ${importableContacts.length} Kontakte.`,
-    );
-    console.log('Mit --apply ausführen, um den Import wirklich durchzuführen.');
-    return;
-  }
-
-  /* Schreiben */
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-
-  console.log('\nSchreibe Firmen …');
-  const companyIdBySevdesk = new Map();
-
-  for (let i = 0; i < companyRows.length; i += 200) {
-    const batch = companyRows.slice(i, i + 200);
-    const { data, error } = await supabase
-      .from('companies')
-      // sevdesk_id ist unique — ein zweiter Lauf aktualisiert statt zu doppeln
-      .upsert(batch, { onConflict: 'sevdesk_id' })
-      .select('id, sevdesk_id');
-
-    if (error) {
-      log({ schritt: 'firmen', von: i, fehler: error.message });
-      console.error(`  Fehler ab Datensatz ${i}: ${error.message}`);
-      process.exitCode = 1;
-      return;
-    }
-    for (const row of data ?? []) companyIdBySevdesk.set(row.sevdesk_id, row.id);
-    process.stdout.write(`\r  ${Math.min(i + 200, companyRows.length)}/${companyRows.length}`);
-  }
-  console.log(`\n  ${companyIdBySevdesk.size} Firmen angelegt oder aktualisiert.`);
-
-  console.log('Schreibe Kontakte …');
-  let linked = 0;
-  const preparedContacts = importableContacts.map(({ _parentSevdeskId, ...row }) => {
-    const companyId = _parentSevdeskId ? companyIdBySevdesk.get(_parentSevdeskId) : null;
-    if (companyId) linked++;
-    return { ...row, company_id: companyId ?? null };
-  });
-
-  let written = 0;
-  for (let i = 0; i < preparedContacts.length; i += 200) {
-    const batch = preparedContacts.slice(i, i + 200);
-    const { data, error } = await supabase
-      .from('contacts')
-      .upsert(batch, { onConflict: 'sevdesk_id' })
-      .select('id');
-
-    if (error) {
-      log({ schritt: 'kontakte', von: i, fehler: error.message });
-      console.error(`  Fehler ab Datensatz ${i}: ${error.message}`);
-      process.exitCode = 1;
-      return;
-    }
-    written += data?.length ?? 0;
-    process.stdout.write(`\r  ${Math.min(i + 200, preparedContacts.length)}/${preparedContacts.length}`);
-  }
-
-  console.log(`\n  ${written} Kontakte angelegt oder aktualisiert, davon ${linked} einer Firma zugeordnet.`);
-  log({ schritt: 'fertig', firmen: companyIdBySevdesk.size, kontakte: written, verknuepft: linked });
-  console.log(`\nFertig. Protokoll: ${PROTOCOL}`);
+out.push('-- Firmen, die es im CRM noch nicht gibt');
+for (const n of neu) {
+  out.push(
+    `insert into public.companies (name, legal_name, customer_number, vat_number, tax_number, ` +
+      `street, zip, city, phone, email, website, sevdesk_id, status) ` +
+      `select ${q(n.name)}, ${q(n.legal_name)}, ${q(n.customer_number)}, ${q(n.vat_number)}, ` +
+      `${q(n.tax_number)}, ${q(n.street)}, ${q(n.zip)}, ${q(n.city)}, ${q(n.phone)}, ${q(n.email)}, ` +
+      `${q(n.website)}, ${q(n.sevdesk_id)}, 'customer'::public.company_status ` +
+      `where not exists (select 1 from public.companies ` +
+      `where lower(name) = lower(${q(n.name)}) or sevdesk_id = ${q(n.sevdesk_id)});`,
+  );
 }
+out.push('');
 
-main().catch((err) => {
-  console.error('\nAbbruch:', err.message);
-  log({ schritt: 'abbruch', fehler: err.message });
-  process.exit(1);
-});
+for (const u of uebersprungen) {
+  out.push(`-- übersprungen: ${u.grund}`);
+}
+out.push('');
+
+out.push('commit;');
+out.push('');
+out.push(`select 'Firmen gesamt' pos, count(*)::text n from public.companies`);
+out.push(`union all select 'mit Kundennummer', count(*)::text from public.companies where customer_number is not null`);
+out.push(`union all select 'mit sevDesk-Verknüpfung', count(*)::text from public.companies where sevdesk_id is not null`);
+out.push(`union all select 'Status Kunde', count(*)::text from public.companies where status = 'customer'`);
+out.push(`union all select 'Deals (unverändert)', count(*)::text from public.deals;`);
+
+console.log(out.join('\n'));
