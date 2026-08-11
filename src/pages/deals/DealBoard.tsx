@@ -262,7 +262,9 @@ export default function DealBoard() {
           onDragEnd={onDragEnd}
           onDragCancel={() => setActiveId(null)}
         >
-          <div className="scrollbar-slim flex gap-3 overflow-x-auto px-4 pb-6 sm:px-6">
+          {/* Auf dem Telefon rastet je eine Spalte ein, statt dass man
+              zwischen zwei Phasen stehen bleibt. */}
+          <div className="scrollbar-slim snap-columns flex gap-3 overflow-x-auto px-4 pb-6 sm:snap-none sm:px-6">
             {stages.map((stage) => {
               const cards = columns[stage.id] ?? [];
               const stats = summary?.get(stage.id);

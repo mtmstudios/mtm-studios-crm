@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CommandPalette } from './CommandPalette';
+import { MobileTabBar } from './MobileTabBar';
 
 const NAV = [
   { to: '/', label: 'Übersicht', icon: LayoutDashboard, end: true },
@@ -73,7 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:static lg:translate-x-0',
+          'pt-safe pb-safe fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:static lg:translate-x-0 lg:pt-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -135,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur sm:px-4">
+        <header className="pt-safe sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur sm:px-4 lg:pt-0">
           <Button
             variant="ghost"
             size="icon"
@@ -183,9 +184,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        {/* Unten Platz für die Tab-Leiste, damit sie nichts verdeckt */}
+        <main className="pb-nav min-w-0 flex-1 lg:pb-0">{children}</main>
       </div>
 
+      <MobileTabBar />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
   );

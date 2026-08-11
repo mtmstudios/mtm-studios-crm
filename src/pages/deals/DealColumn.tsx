@@ -19,7 +19,7 @@ export function DealColumn({ stage, count, value, loading, children }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
 
   return (
-    <section className="flex w-[280px] shrink-0 flex-col">
+    <section className="snap-column flex w-[84vw] shrink-0 flex-col sm:w-[280px]">
       <header className="mb-2 px-1">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="truncate text-sm font-semibold">{stage.name}</h2>

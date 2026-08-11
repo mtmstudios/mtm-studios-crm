@@ -108,6 +108,9 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Kein Gummiband-Effekt am Rand — das lässt eine Website nach Website
+       aussehen statt nach App. */
+    overscroll-behavior-y: none;
   }
 
   body {
@@ -116,6 +119,17 @@
     /* Tabellenziffern: verhindert das Zittern von Beträgen in Listen */
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'cv11';
+    overscroll-behavior-y: none;
+  }
+
+  /* iOS zoomt beim Fokussieren, sobald ein Eingabefeld unter 16px liegt.
+     Auf Touch-Geräten deshalb mindestens 16px erzwingen. */
+  @media (hover: none) and (pointer: coarse) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 
   /* Sichtbarer Fokus nur bei Tastaturbedienung */
@@ -167,5 +181,30 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Abstände zu Notch und Home-Indicator. Werden mit viewport-fit=cover
+     gebraucht, sonst liegen Kopf- und Fußleiste unter der Systemoberfläche. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .px-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  /* Für Inhalte, die über der festen Tab-Leiste enden müssen */
+  .pb-nav {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+
+  /* Waagerechte Listen wie das Kanban-Board rasten an den Spalten ein */
+  .snap-columns {
+    scroll-snap-type: x mandatory;
+  }
+  .snap-column {
+    scroll-snap-align: start;
   }
 }

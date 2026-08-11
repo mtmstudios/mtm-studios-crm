@@ -192,6 +192,38 @@ export default function ActivityList() {
           }}
           selected={selected}
           onSelectedChange={setSelected}
+          renderMobileCard={(row) => {
+            const overdue = !row.done && row.due_at && new Date(row.due_at) < new Date();
+            return (
+              <div className="flex items-start gap-3">
+                <span onClick={(e) => e.stopPropagation()} className="pt-0.5">
+                  <Checkbox
+                    checked={row.done}
+                    onCheckedChange={(checked) =>
+                      toggle.mutate({ id: row.id, done: checked === true })
+                    }
+                    aria-label="Als erledigt markieren"
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className={cn('truncate font-medium', row.done && 'text-muted-foreground line-through')}>
+                    {row.subject}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {ACTIVITY_LABEL[row.type]}
+                    {row.due_at && (
+                      <>
+                        {' · '}
+                        <span className={cn(overdue && 'font-medium text-destructive')}>
+                          {dateRelative(row.due_at)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }}
           empty={
             <EmptyState
               icon={CheckSquare}

@@ -210,6 +210,18 @@ export default function CompanyList() {
           onRowClick={(row) => navigate(`/firmen/${row.id}`)}
           selected={selected}
           onSelectedChange={setSelected}
+          renderMobileCard={(row) => (
+            <div className="flex items-center gap-3">
+              <EntityAvatar name={row.name} seed={row.id} square />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{row.name}</div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {[row.industry, row.city].filter(Boolean).join(' · ') || '—'}
+                </div>
+              </div>
+              <StatusBadge kind="company" value={row.status} />
+            </div>
+          )}
           empty={
             <EmptyState
               icon={Building2}

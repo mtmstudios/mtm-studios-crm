@@ -136,6 +136,21 @@ export default function DealList() {
           onRowClick={(row) => navigate(`/deals/${row.id}`)}
           selected={selected}
           onSelectedChange={setSelected}
+          renderMobileCard={(row) => (
+            <div className="space-y-1">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="truncate font-medium">{row.title}</span>
+                <span className="shrink-0 font-semibold tabular-nums">{money(row.value)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-xs text-muted-foreground">
+                  {row.companies?.name ?? row.contacts?.full_name ?? '—'}
+                  {row.stages?.name && ` · ${row.stages.name}`}
+                </span>
+                <StatusBadge kind="deal" value={row.status} />
+              </div>
+            </div>
+          )}
           empty={
             <EmptyState
               icon={Handshake}

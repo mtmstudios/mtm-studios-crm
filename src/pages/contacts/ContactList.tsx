@@ -221,6 +221,20 @@ export default function ContactList() {
           onRowClick={(row) => navigate(`/kontakte/${row.id}`)}
           selected={selected}
           onSelectedChange={setSelected}
+          renderMobileCard={(row) => (
+            <div className="flex items-center gap-3">
+              <EntityAvatar name={displayName(row)} seed={row.id} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{displayName(row)}</div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {[row.job_title, row.companies?.name].filter(Boolean).join(' · ') ||
+                    row.email ||
+                    '—'}
+                </div>
+              </div>
+              <StatusBadge kind="contact" value={row.status} />
+            </div>
+          )}
           empty={
             <EmptyState
               icon={Users}

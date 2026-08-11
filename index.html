@@ -2,13 +2,29 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      viewport-fit=cover lässt die Seite unter Notch und Home-Indicator
+      laufen; die Abstände holt das Layout über env(safe-area-inset-*)
+      zurück. maximum-scale bleibt bewusst offen — Zoom zu sperren wäre
+      eine Barriere.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="light" />
     <title>CRM</title>
     <meta name="description" content="Kontakte, Firmen, Pipeline und Termine an einem Ort." />
     <!-- Interne Anwendung: keine Indexierung, keine Vorschaubilder -->
     <meta name="robots" content="noindex, nofollow" />
+
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Vom Startbildschirm ohne Browserleiste starten -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CRM" />
+    <!-- Statusleiste in Systemfarbe, damit der Kopfbereich nicht abgeschnitten wirkt -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#ffffff" />
   </head>
 
   <body>

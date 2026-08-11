@@ -43,6 +43,12 @@ interface Props<T> {
    */
   error?: Error | null;
   onRetry?(): void;
+  /**
+   * Darstellung einer Zeile auf schmalen Schirmen. Ist sie gesetzt, weicht
+   * die Tabelle unterhalb von md einer Kartenliste — eine Tabelle mit
+   * 640px Mindestbreite lässt sich auf einem Telefon nicht bedienen.
+   */
+  renderMobileCard?(row: T): ReactNode;
   /** Zeilen im Ladezustand */
   skeletonRows?: number;
 }
@@ -61,6 +67,7 @@ export function DataTable<T>({
   empty,
   error,
   onRetry,
+  renderMobileCard,
   skeletonRows = 8,
 }: Props<T>) {
   const selectable = !!selected && !!onSelectedChange;
@@ -115,8 +122,52 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="scrollbar-slim w-full overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse text-sm">
+    <>
+      {/* --- Schmale Schirme: Karten statt Tabelle --------------------- */}
+      {renderMobileCard && (
+        <ul className="divide-y divide-border md:hidden">
+          {loading && rows.length === 0
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <li key={i} className="px-4 py-3">
+                  <Skeleton className="h-12 w-full" />
+                </li>
+              ))
+            : rows.map((row) => {
+                const id = rowId(row);
+                const isSelected = selected?.has(id) ?? false;
+                return (
+                  <li key={id} className={cn(isSelected && 'bg-primary/5')}>
+                    <div className="flex items-center gap-3 px-4">
+                      {selectable && (
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleOne(id)}
+                          aria-label="Zeile auswählen"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={onRowClick ? () => onRowClick(row) : undefined}
+                        // 60px Höhe: bequem mit dem Daumen zu treffen
+                        className="min-h-[60px] flex-1 py-3 text-left active:bg-surface-hover"
+                      >
+                        {renderMobileCard(row)}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+        </ul>
+      )}
+
+      {/* --- Ab md: die volle Tabelle ---------------------------------- */}
+      <div
+        className={cn(
+          'scrollbar-slim w-full overflow-x-auto',
+          renderMobileCard && 'hidden md:block',
+        )}
+      >
+        <table className="w-full min-w-[640px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-surface text-xs uppercase tracking-wide text-muted-foreground">
             {selectable && (
@@ -221,8 +272,9 @@ export function DataTable<T>({
                   </tr>
                 );
               })}
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

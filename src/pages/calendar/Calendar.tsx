@@ -38,6 +38,9 @@ export default function Calendar() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AppointmentRow | null>(null);
   const [prefillDay, setPrefillDay] = useState<Date | null>(null);
+  // Auf schmalen Schirmen wird ein Tag gezeigt statt sieben Spalten —
+  // ein 900px-Raster ist auf dem Telefon nicht lesbar.
+  const [selectedDay, setSelectedDay] = useState(new Date());
 
   // Woche beginnt in Deutschland am Montag
   const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
@@ -135,7 +138,100 @@ export default function Calendar() {
         </Select>
       </div>
 
-      <div className="scrollbar-slim overflow-x-auto px-4 pb-6 sm:px-6">
+      {/* --- Telefon: ein Tag, darüber eine Wochenleiste ---------------- */}
+      <div className="px-4 pb-6 md:hidden">
+        <div className="mb-3 grid grid-cols-7 gap-1">
+          {days.map((day) => {
+            const key = format(day, 'yyyy-MM-dd');
+            const anzahl = (byDay.get(key) ?? []).length;
+            const gewaehlt = format(selectedDay, 'yyyy-MM-dd') === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSelectedDay(day)}
+                className={cn(
+                  'flex min-h-[56px] flex-col items-center justify-center rounded-md border transition-colors',
+                  gewaehlt
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : isToday(day)
+                      ? 'border-primary/40 bg-surface'
+                      : 'border-transparent bg-surface',
+                )}
+              >
+                <span className="text-[10px] uppercase opacity-80">
+                  {format(day, 'EEEEEE', { locale: de })}
+                </span>
+                <span className="text-sm font-semibold">{format(day, 'd')}</span>
+                {/* Punkt statt Zahl: zeigt „hier ist was", ohne zu drängeln */}
+                <span
+                  className={cn(
+                    'mt-0.5 h-1 w-1 rounded-full',
+                    anzahl > 0 ? (gewaehlt ? 'bg-primary-foreground' : 'bg-primary') : 'bg-transparent',
+                  )}
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">
+            {format(selectedDay, 'EEEE, d. MMMM', { locale: de })}
+          </h2>
+          <Button variant="outline" size="sm" onClick={() => openNew(selectedDay)}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            Termin
+          </Button>
+        </div>
+
+        {isPending ? (
+          <Skeleton className="h-24 w-full" />
+        ) : (byDay.get(format(selectedDay, 'yyyy-MM-dd')) ?? []).length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+            Keine Termine an diesem Tag.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {(byDay.get(format(selectedDay, 'yyyy-MM-dd')) ?? []).map((appointment) => (
+              <li key={appointment.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(appointment);
+                    setPrefillDay(null);
+                    setDialogOpen(true);
+                  }}
+                  className={cn(
+                    'flex w-full items-start gap-3 rounded-lg border-l-2 bg-card p-3 text-left shadow-sm active:bg-surface-hover',
+                    appointment.status === 'cancelled'
+                      ? 'border-l-destructive opacity-60'
+                      : 'border-l-primary',
+                  )}
+                >
+                  <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                    {time(appointment.starts_at)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{appointment.title}</span>
+                    {(appointment.contacts || appointment.guest_name) && (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {appointment.contacts?.full_name ?? appointment.guest_name}
+                      </span>
+                    )}
+                  </span>
+                  {appointment.status !== 'scheduled' && (
+                    <StatusBadge kind="appointment" value={appointment.status} />
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* --- Ab md: die Wochenansicht ---------------------------------- */}
+      <div className="scrollbar-slim hidden overflow-x-auto px-4 pb-6 sm:px-6 md:block">
         <div className="grid min-w-[900px] grid-cols-7 gap-2">
           {days.map((day) => {
             const key = format(day, 'yyyy-MM-dd');
