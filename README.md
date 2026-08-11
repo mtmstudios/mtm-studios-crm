@@ -131,6 +131,24 @@ die Zugangsdaten des Anbieters.
 
 ---
 
+## Deployment
+
+Produktiv auf Vercel: **https://mtm-studios-crm.vercel.app**
+
+Projekt `mtm-studios-crm` (Team `mtmstudios-projects`), verbunden mit diesem
+Repo. Jeder Push auf `main` löst einen Build aus. Die beiden `VITE_`-Variablen
+sind unter *Settings → Environment Variables* für Production und Preview
+hinterlegt.
+
+In Supabase sind unter *Authentication → URL Configuration* eingetragen:
+
+- Site URL: `https://mtm-studios-crm.vercel.app`
+- Redirect URLs: die Vercel-Domain und `http://localhost:8080/**`
+
+Ohne diese Einträge zeigen Bestätigungs- und Passwortlinks ins Leere.
+
+---
+
 ## Befehle
 
 ```bash
