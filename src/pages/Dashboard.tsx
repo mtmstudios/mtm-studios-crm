@@ -1,223 +1,278 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { KPICard } from "@/components/crm/KPICard";
-import { StatusBadge } from "@/components/crm/StatusBadge";
-import { Users, Handshake, Euro, CalendarCheck, Mic, Phone, Clock, Upload, TrendingUp, BadgeEuro } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
-import { useState } from "react";
-import { runSeed } from "@/lib/seedDatabase";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  CheckSquare,
+  Euro,
+  Handshake,
+  Target,
+  TrendingUp,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { dateRelative, dateShort, growth, money, num } from '@/lib/format';
+import { useAuth } from '@/hooks/useAuth';
+import { RANGE_LABEL, useDashboardMetrics, useRecentWins, type Range } from '@/features/reports/api';
+import { useMyOpenActivities, useToggleActivity } from '@/features/activities/api';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/crm/primitives';
 
-const stageLabels: Record<string, string> = {
-  lead: "Lead", qualified: "Qualifiziert", proposal: "Angebot",
-  negotiation: "Verhandlung", won: "Gewonnen", lost: "Verloren",
-};
-const stageColors = ["#3b82f6", "#8b5cf6", "#f97316", "#eab308", "#22c55e", "#ef4444"];
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
+function KpiCard({
+  label,
+  value,
+  hint,
+  delta,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  delta?: number | null;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div className="mt-2 text-2xl font-semibold tabular-nums">{value}</div>
+      <div className="mt-1 flex items-center gap-2 text-xs">
+        {delta != null && (
+          <span
+            className={cn(
+              'inline-flex items-center gap-0.5 font-medium',
+              delta >= 0 ? 'text-success' : 'text-destructive',
+            )}
+          >
+            {delta >= 0 ? (
+              <ArrowUpRight className="h-3 w-3" />
+            ) : (
+              <ArrowDownRight className="h-3 w-3" />
+            )}
+            {Math.abs(Math.round(delta))} %
+          </span>
+        )}
+        {hint && <span className="text-muted-foreground">{hint}</span>}
+      </div>
+    </div>
+  );
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [seeding, setSeeding] = useState(false);
+  const { profile } = useAuth();
+  const [range, setRange] = useState<Range>('30t');
+  const [scope, setScope] = useState<'ich' | 'team'>('team');
 
-  const { data: companyCount = 0 } = useQuery({
-    queryKey: ["companies-count"],
-    queryFn: async () => {
-      const { count } = await supabase.from("companies").select("*", { count: "exact", head: true });
-      return count || 0;
-    },
-  });
+  const ownerId = scope === 'ich' ? profile?.id : null;
+  const { data: metrics, isPending } = useDashboardMetrics(range, ownerId);
+  const { data: activities = [] } = useMyOpenActivities(profile?.id);
+  const { data: wins = [] } = useRecentWins();
+  const toggle = useToggleActivity();
 
-  const handleSeed = async () => {
-    if (!user) return;
-    setSeeding(true);
-    try {
-      const result = await runSeed(user.id);
-      toast.success(`${result.companiesInserted} Unternehmen und ${result.dealsInserted} Deals importiert`);
-      queryClient.invalidateQueries();
-    } catch (e: any) {
-      toast.error("Import fehlgeschlagen: " + e.message);
-    } finally {
-      setSeeding(false);
-    }
-  };
+  const winRate =
+    metrics && metrics.won_count + metrics.lost_count > 0
+      ? (metrics.won_count / (metrics.won_count + metrics.lost_count)) * 100
+      : null;
 
-  const { data: contactCount = 0 } = useQuery({
-    queryKey: ["contacts-count"],
-    queryFn: async () => {
-      const { count } = await supabase.from("contacts").select("*", { count: "exact", head: true });
-      return count || 0;
-    },
-  });
-
-  const { data: deals = [] } = useQuery({
-    queryKey: ["deals-all"],
-    queryFn: async () => {
-      const { data } = await supabase.from("deals").select("*");
-      return data || [];
-    },
-  });
-
-  const { data: activitiesToday = 0 } = useQuery({
-    queryKey: ["activities-today"],
-    queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const { count } = await supabase
-        .from("activities")
-        .select("*", { count: "exact", head: true })
-        .gte("due_date", today.toISOString())
-        .lt("due_date", tomorrow.toISOString())
-        .is("completed_at", null);
-      return count || 0;
-    },
-  });
-
-  const { data: recentActivities = [] } = useQuery({
-    queryKey: ["recent-activities"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("activities")
-        .select("*, contacts(first_name, last_name)")
-        .order("created_at", { ascending: false })
-        .limit(10);
-      return data || [];
-    },
-  });
-
-  const { data: voiceLeads = [] } = useQuery({
-    queryKey: ["voice-leads-new"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("voice_leads")
-        .select("*")
-        .eq("status", "new")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      return data || [];
-    },
-  });
-
-  const openDeals = deals.filter((d) => !["won", "lost"].includes(d.stage));
-  const pipelineValue = openDeals.reduce((sum, d) => sum + Number(d.value), 0);
-  const weightedPipeline = openDeals.reduce((sum, d) => sum + Number(d.value) * (d.probability / 100), 0);
-  const wonDeals = deals.filter((d) => d.stage === "won");
-  const totalRevenue = wonDeals.reduce((sum, d) => sum + Number(d.value), 0);
-
-  const stageData = ["lead", "qualified", "proposal", "negotiation", "won", "lost"].map((stage) => {
-    const stageDeals = deals.filter((d) => d.stage === stage);
-    return {
-      name: stageLabels[stage],
-      count: stageDeals.length,
-      value: stageDeals.reduce((s, d) => s + Number(d.value), 0),
-    };
-  });
-
-  const activityIcons: Record<string, any> = { call: Phone, email: Users, meeting: CalendarCheck, task: CalendarCheck, note: Users };
+  const maxStageValue = Math.max(1, ...(metrics?.by_stage ?? []).map((s) => Number(s.value)));
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
-        <Button onClick={handleSeed} disabled={seeding} size="sm" variant="outline" className="gap-2">
-          <Upload className="h-4 w-4" />
-          {seeding ? "Importiere..." : companyCount === 0 ? "Daten importieren" : "Neue Daten importieren"}
-        </Button>
-      </div>
+    <>
+      <PageHeader
+        title={`Hallo${profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}`}
+        subtitle={RANGE_LABEL[range]}
+      >
+        <Select value={scope} onValueChange={(v) => setScope(v as 'ich' | 'team')}>
+          <SelectTrigger className="h-9 w-[130px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="team">Ganzes Team</SelectItem>
+            <SelectItem value="ich">Nur ich</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={range} onValueChange={(v) => setRange(v as Range)}>
+          <SelectTrigger className="h-9 w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(RANGE_LABEL) as Range[]).map((r) => (
+              <SelectItem key={r} value={r}>
+                {RANGE_LABEL[r]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </PageHeader>
 
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
-        <KPICard label="Umsatz (Gewonnen)" value={formatCurrency(totalRevenue)} icon={BadgeEuro} />
-        <KPICard label="Pipeline-Wert" value={formatCurrency(pipelineValue)} icon={Euro} />
-        <KPICard label="Gewichtete Pipeline" value={formatCurrency(weightedPipeline)} icon={TrendingUp} />
-        <KPICard label="Offene Deals" value={openDeals.length} icon={Handshake} />
-        <KPICard label="Kontakte gesamt" value={contactCount} icon={Users} />
-        <KPICard label="Aktivitäten heute" value={activitiesToday} icon={CalendarCheck} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Pipeline Chart */}
-        <div className="bg-card rounded-lg border border-border p-5">
-          <h2 className="text-sm font-medium text-foreground mb-4">Pipeline-Übersicht</h2>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={stageData}>
-              <XAxis dataKey="name" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ background: "#161616", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#fff" }}
-                formatter={(value: number) => [value, "Deals"]}
-              />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {stageData.map((_, i) => (
-                  <Cell key={i} fill={stageColors[i]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="bg-card rounded-lg border border-border p-5">
-          <h2 className="text-sm font-medium text-foreground mb-4">Letzte Aktivitäten</h2>
-          {recentActivities.length === 0 ? (
-            <p className="text-secondary-foreground text-sm">Keine Aktivitäten vorhanden</p>
-          ) : (
-            <div className="space-y-3 max-h-[180px] overflow-auto">
-              {recentActivities.map((a: any) => {
-                const Icon = activityIcons[a.type] || CalendarCheck;
-                return (
-                  <div key={a.id} className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-md bg-surface flex items-center justify-center shrink-0">
-                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm text-foreground truncate">{a.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {a.contacts ? `${a.contacts.first_name} ${a.contacts.last_name}` : ""} · {format(new Date(a.created_at), "dd.MM.yyyy HH:mm", { locale: de })}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Voice Leads */}
-      <div className="bg-card rounded-lg border border-border p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Mic className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-medium text-foreground">Neue Voice AI Leads</h2>
-        </div>
-        {voiceLeads.length === 0 ? (
-          <p className="text-secondary-foreground text-sm">Keine neuen Voice Leads</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {voiceLeads.map((vl: any) => (
-              <div key={vl.id} className="bg-surface rounded-lg p-4 border border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-foreground">{vl.caller_name}</span>
-                  <StatusBadge status={vl.intent} />
-                </div>
-                <p className="text-xs text-secondary-foreground line-clamp-2 mb-2">{vl.summary || "Keine Zusammenfassung"}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{vl.caller_phone}</span>
-                  <span className="text-xs text-primary font-medium">Score: {vl.ai_score}</span>
-                </div>
-              </div>
+      <div className="space-y-6 p-4 sm:p-6">
+        {isPending || !metrics ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-28 w-full" />
             ))}
           </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <KpiCard
+              label="Gewonnen"
+              value={money(metrics.won_value)}
+              hint={`${num(metrics.won_count)} Deals`}
+              delta={growth(Number(metrics.won_value), Number(metrics.won_value_prev))}
+              icon={Euro}
+            />
+            <KpiCard
+              label="Offene Pipeline"
+              value={money(metrics.open_value)}
+              hint={`${num(metrics.open_count)} Deals`}
+              icon={Handshake}
+            />
+            <KpiCard
+              label="Forecast"
+              value={money(metrics.forecast)}
+              hint="gewichtet nach Phase"
+              icon={TrendingUp}
+            />
+            <KpiCard
+              label="Abschlussquote"
+              value={winRate == null ? '—' : `${Math.round(winRate)} %`}
+              hint={`${num(metrics.won_count)} zu ${num(metrics.lost_count)}`}
+              icon={Target}
+            />
+          </div>
         )}
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          {/* Pipeline nach Phase */}
+          <section className="rounded-lg border border-border bg-card">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <h2 className="text-sm font-semibold">Pipeline nach Phase</h2>
+              <Button variant="link" size="sm" className="h-auto p-0" asChild>
+                <Link to="/deals">Zum Board</Link>
+              </Button>
+            </div>
+            <div className="space-y-3 p-4">
+              {(metrics?.by_stage ?? []).length === 0 && (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  Noch keine offenen Deals.
+                </p>
+              )}
+              {(metrics?.by_stage ?? []).map((stage) => (
+                <div key={stage.stage_id}>
+                  <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+                    <span className="truncate font-medium">{stage.name}</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {num(stage.count)} · {money(stage.value)}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${(Number(stage.value) / maxStageValue) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="space-y-6">
+            {/* Anstehende Aufgaben */}
+            <section className="rounded-lg border border-border bg-card">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <h2 className="text-sm font-semibold">Meine Aufgaben</h2>
+                {metrics && metrics.activities_overdue > 0 && (
+                  <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                    {num(metrics.activities_overdue)} überfällig
+                  </span>
+                )}
+              </div>
+              {activities.length === 0 ? (
+                <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  Nichts offen. <CheckSquare className="ml-1 inline h-3.5 w-3.5" />
+                </p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {activities.map((activity) => {
+                    const overdue = activity.due_at && new Date(activity.due_at) < new Date();
+                    return (
+                      <li key={activity.id} className="flex items-start gap-2.5 px-4 py-2.5">
+                        <Checkbox
+                          checked={activity.done}
+                          onCheckedChange={(checked) =>
+                            toggle.mutate({ id: activity.id, done: checked === true })
+                          }
+                          className="mt-0.5"
+                          aria-label="Als erledigt markieren"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">{activity.subject}</div>
+                          <div
+                            className={cn(
+                              'text-xs text-muted-foreground',
+                              overdue && 'font-medium text-destructive',
+                            )}
+                          >
+                            {dateRelative(activity.due_at)}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <div className="border-t border-border px-4 py-2">
+                <Button variant="link" size="sm" className="h-auto p-0" asChild>
+                  <Link to="/aufgaben">Alle Aufgaben</Link>
+                </Button>
+              </div>
+            </section>
+
+            {/* Letzte Abschlüsse */}
+            <section className="rounded-lg border border-border bg-card">
+              <div className="border-b border-border px-4 py-3">
+                <h2 className="text-sm font-semibold">Zuletzt gewonnen</h2>
+              </div>
+              {wins.length === 0 ? (
+                <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  Noch keine gewonnenen Deals.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {wins.map((win) => (
+                    <li key={win.id}>
+                      <Link
+                        to={`/deals/${win.id}`}
+                        className="flex items-center justify-between gap-2 px-4 py-2.5 hover:bg-surface-hover"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium">{win.title}</span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {win.companies?.name ?? dateShort(win.won_at)}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-sm font-medium tabular-nums text-success">
+                          {money(win.value)}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
