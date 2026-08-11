@@ -17,6 +17,30 @@ begin
     return;
   end if;
 
+  -- Leere Alt-Tabellen bedeuten: hier gibt es nichts zu übernehmen. Das ist
+  -- der Normalfall auf einem Zielprojekt, das nur eine alte, nie befüllte
+  -- Schemahülle trug — der Bestand kommt dort über
+  -- scripts/seed-from-backup.mjs. Ohne diese Prüfung würde die Migration an
+  -- Spalten scheitern, die in älteren Schemaständen schlicht fehlen.
+  perform 1 from public.legacy_companies limit 1;
+  if not found then
+    raise notice 'Altbestand ist leer — Übernahme übersprungen.';
+    return;
+  end if;
+
+  -- Der Vollständigkeit halber: die Übernahme setzt das vollständige
+  -- Vorgängerschema voraus. Fehlt eine erwartete Spalte, lieber sauber
+  -- aussteigen als mitten im Insert abbrechen.
+  if not exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public' and table_name = 'legacy_companies'
+       and column_name in ('website', 'status')
+     group by table_name having count(*) = 2
+  ) then
+    raise notice 'Altbestand hat ein abweichendes Schema — Übernahme übersprungen.';
+    return;
+  end if;
+
   -- -------------------------------------------------------------------------
   -- Firmen
   -- Der Altbestand kennt `notes` als Freitextfeld. Das wandert nach
