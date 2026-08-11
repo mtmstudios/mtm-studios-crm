@@ -1,818 +1,415 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+/**
+ * Datenbanktypen, passend zu supabase/migrations/*.sql.
+ *
+ * Bei Schemaänderungen neu erzeugen mit:
+ *   npx supabase gen types typescript --project-id <ref> > src/integrations/supabase/types.ts
+ */
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type AppRole = 'admin' | 'member';
+export type EntityType = 'contact' | 'company' | 'deal';
+export type CompanyStatus = 'lead' | 'prospect' | 'customer' | 'partner' | 'inactive';
+export type ContactStatus = 'lead' | 'active' | 'inactive';
+export type DealStatus = 'open' | 'won' | 'lost';
+export type ActivityType = 'call' | 'meeting' | 'task' | 'email' | 'deadline' | 'lunch';
+export type ChannelType = 'email' | 'sms' | 'whatsapp';
+export type DirectionType = 'inbound' | 'outbound';
+export type FieldType =
+  | 'text' | 'textarea' | 'number' | 'currency' | 'date'
+  | 'select' | 'multiselect' | 'checkbox' | 'url' | 'email' | 'phone';
+export type ApptStatus = 'scheduled' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+
+type Profile = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role: AppRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+type Company = {
+  id: string;
+  name: string;
+  legal_name: string | null;
+  domain: string | null;
+  website: string | null;
+  industry: string | null;
+  employee_count: number | null;
+  annual_revenue: number | null;
+  phone: string | null;
+  email: string | null;
+  street: string | null;
+  zip: string | null;
+  city: string | null;
+  country: string | null;
+  vat_number: string | null;
+  tax_number: string | null;
+  customer_number: string | null;
+  status: CompanyStatus;
+  owner_id: string | null;
+  description: string | null;
+  custom_fields: Record<string, Json>;
+  sevdesk_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+type Contact = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  salutation: string | null;
+  academic_title: string | null;
+  job_title: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  company_id: string | null;
+  street: string | null;
+  zip: string | null;
+  city: string | null;
+  country: string | null;
+  birthday: string | null;
+  linkedin_url: string | null;
+  status: ContactStatus;
+  owner_id: string | null;
+  description: string | null;
+  custom_fields: Record<string, Json>;
+  sevdesk_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  /** generierte Spalte — nur lesbar */
+  full_name: string;
+}
+
+type Pipeline = {
+  id: string;
+  name: string;
+  position: number;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+type Stage = {
+  id: string;
+  pipeline_id: string;
+  name: string;
+  position: number;
+  probability: number;
+  rotting_days: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+type LostReason = {
+  id: string;
+  label: string;
+  position: number;
+}
+
+type Deal = {
+  id: string;
+  title: string;
+  value: number;
+  currency: string;
+  pipeline_id: string;
+  stage_id: string;
+  contact_id: string | null;
+  company_id: string | null;
+  owner_id: string | null;
+  status: DealStatus;
+  probability: number | null;
+  expected_close_date: string | null;
+  won_at: string | null;
+  lost_at: string | null;
+  lost_reason_id: string | null;
+  lost_comment: string | null;
+  source: string | null;
+  description: string | null;
+  custom_fields: Record<string, Json>;
+  position: number;
+  stage_changed_at: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+type DealStageHistory = {
+  id: number;
+  deal_id: string;
+  from_stage_id: string | null;
+  to_stage_id: string;
+  changed_by: string | null;
+  changed_at: string;
+}
+
+type Activity = {
+  id: string;
+  type: ActivityType;
+  subject: string;
+  notes: string | null;
+  due_at: string | null;
+  duration_minutes: number | null;
+  done: boolean;
+  done_at: string | null;
+  deal_id: string | null;
+  contact_id: string | null;
+  company_id: string | null;
+  owner_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+type Note = {
+  id: string;
+  body: string;
+  deal_id: string | null;
+  contact_id: string | null;
+  company_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+type Tag = {
+  id: string;
+  label: string;
+  color: string;
+  created_at: string;
+}
+
+type Tagging = {
+  tag_id: string;
+  entity: EntityType;
+  entity_id: string;
+  created_at: string;
+}
+
+type CustomFieldDef = {
+  id: string;
+  entity: EntityType;
+  key: string;
+  label: string;
+  field_type: FieldType;
+  options: string[];
+  position: number;
+  required: boolean;
+  created_at: string;
+}
+
+type Conversation = {
+  id: string;
+  subject: string | null;
+  channel: ChannelType;
+  contact_id: string | null;
+  company_id: string | null;
+  deal_id: string | null;
+  counterparty: string;
+  external_id: string | null;
+  last_message_at: string;
+  unread_count: number;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+type Message = {
+  id: string;
+  conversation_id: string;
+  direction: DirectionType;
+  body: string;
+  body_html: string | null;
+  from_addr: string | null;
+  to_addr: string | null;
+  external_id: string | null;
+  sent_at: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+type BookingSetting = {
+  id: string;
+  owner_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  duration_minutes: number;
+  buffer_minutes: number;
+  timezone: string;
+  availability: Record<string, [string, string][]>;
+  lead_time_hours: number;
+  horizon_days: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+type Appointment = {
+  id: string;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  location: string | null;
+  meeting_url: string | null;
+  notes: string | null;
+  status: ApptStatus;
+  contact_id: string | null;
+  company_id: string | null;
+  deal_id: string | null;
+  owner_id: string | null;
+  booking_id: string | null;
+  guest_name: string | null;
+  guest_email: string | null;
+  guest_phone: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+type AuditEntry = {
+  id: number;
+  entity: string;
+  entity_id: string;
+  action: string;
+  actor_id: string | null;
+  changes: Json;
+  created_at: string;
+}
+
+/** Felder, die die Datenbank selbst setzt und die beim Insert entfallen. */
+type Generated = 'id' | 'created_at' | 'updated_at';
+
+/**
+ * supabase-js löst seine Generics über genau diese Struktur auf — fehlt
+ * `Relationships` oder `CompositeTypes`, fällt die Ableitung stillschweigend
+ * auf `never` zurück und jede Abfrage schlägt beim Typecheck fehl.
+ *
+ * `Relationships` bleibt leer: die eingebetteten Selects (`owner:profiles!...`)
+ * werden an der Aufrufstelle explizit typisiert. Sobald das Supabase-Projekt
+ * steht, ersetzt der Generator diese Datei vollständig.
+ */
+type TableDef<Row, Extra extends keyof Row = never> = {
+  Row: Row;
+  Insert: Partial<Pick<Row, Extract<Generated, keyof Row>>> &
+    Partial<Omit<Row, Generated | Extra>>;
+  Update: Partial<Omit<Row, Extra>>;
+  Relationships: [];
+};
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: '12';
+  };
   public: {
     Tables: {
-      activities: {
-        Row: {
-          company_id: string | null
-          completed_at: string | null
-          contact_id: string | null
-          created_at: string
-          deal_id: string | null
-          description: string | null
-          due_date: string | null
-          id: string
-          owner_id: string
-          title: string
-          type: Database["public"]["Enums"]["activity_type"]
-        }
-        Insert: {
-          company_id?: string | null
-          completed_at?: string | null
-          contact_id?: string | null
-          created_at?: string
-          deal_id?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          owner_id: string
-          title: string
-          type: Database["public"]["Enums"]["activity_type"]
-        }
-        Update: {
-          company_id?: string | null
-          completed_at?: string | null
-          contact_id?: string | null
-          created_at?: string
-          deal_id?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          owner_id?: string
-          title?: string
-          type?: Database["public"]["Enums"]["activity_type"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activities_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activities_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activities_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "deals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      appointments: {
-        Row: {
-          booking_token: string | null
-          contact_email: string | null
-          contact_id: string | null
-          contact_name: string | null
-          contact_phone: string | null
-          created_at: string
-          end_time: string
-          id: string
-          notes: string | null
-          owner_id: string
-          start_time: string
-          status: Database["public"]["Enums"]["appointment_status"]
-          title: string
-        }
-        Insert: {
-          booking_token?: string | null
-          contact_email?: string | null
-          contact_id?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          end_time: string
-          id?: string
-          notes?: string | null
-          owner_id: string
-          start_time: string
-          status?: Database["public"]["Enums"]["appointment_status"]
-          title: string
-        }
-        Update: {
-          booking_token?: string | null
-          contact_email?: string | null
-          contact_id?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          end_time?: string
-          id?: string
-          notes?: string | null
-          owner_id?: string
-          start_time?: string
-          status?: Database["public"]["Enums"]["appointment_status"]
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appointments_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_settings: {
-        Row: {
-          available_days: number[]
-          booking_page_description: string | null
-          booking_page_slug: string | null
-          booking_page_title: string | null
-          created_at: string
-          end_hour: number
-          id: string
-          owner_id: string
-          slot_duration: number
-          start_hour: number
-        }
-        Insert: {
-          available_days?: number[]
-          booking_page_description?: string | null
-          booking_page_slug?: string | null
-          booking_page_title?: string | null
-          created_at?: string
-          end_hour?: number
-          id?: string
-          owner_id: string
-          slot_duration?: number
-          start_hour?: number
-        }
-        Update: {
-          available_days?: number[]
-          booking_page_description?: string | null
-          booking_page_slug?: string | null
-          booking_page_title?: string | null
-          created_at?: string
-          end_hour?: number
-          id?: string
-          owner_id?: string
-          slot_duration?: number
-          start_hour?: number
-        }
-        Relationships: []
-      }
-      companies: {
-        Row: {
-          city: string | null
-          country: string | null
-          created_at: string
-          id: string
-          industry: string | null
-          name: string
-          notes: string | null
-          owner_id: string
-          size: Database["public"]["Enums"]["company_size"] | null
-          status: string
-          website: string | null
-        }
-        Insert: {
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          id?: string
-          industry?: string | null
-          name: string
-          notes?: string | null
-          owner_id: string
-          size?: Database["public"]["Enums"]["company_size"] | null
-          status?: string
-          website?: string | null
-        }
-        Update: {
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          id?: string
-          industry?: string | null
-          name?: string
-          notes?: string | null
-          owner_id?: string
-          size?: Database["public"]["Enums"]["company_size"] | null
-          status?: string
-          website?: string | null
-        }
-        Relationships: []
-      }
-      contacts: {
-        Row: {
-          company_id: string | null
-          created_at: string
-          email: string | null
-          first_name: string
-          id: string
-          last_activity_at: string | null
-          last_name: string
-          notes: string | null
-          owner_id: string
-          phone: string | null
-          position: string | null
-          source: Database["public"]["Enums"]["contact_source"]
-          status: Database["public"]["Enums"]["contact_status"]
-          tags: string[] | null
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          email?: string | null
-          first_name: string
-          id?: string
-          last_activity_at?: string | null
-          last_name: string
-          notes?: string | null
-          owner_id: string
-          phone?: string | null
-          position?: string | null
-          source?: Database["public"]["Enums"]["contact_source"]
-          status?: Database["public"]["Enums"]["contact_status"]
-          tags?: string[] | null
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          email?: string | null
-          first_name?: string
-          id?: string
-          last_activity_at?: string | null
-          last_name?: string
-          notes?: string | null
-          owner_id?: string
-          phone?: string | null
-          position?: string | null
-          source?: Database["public"]["Enums"]["contact_source"]
-          status?: Database["public"]["Enums"]["contact_status"]
-          tags?: string[] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contacts_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversations: {
-        Row: {
-          channel: Database["public"]["Enums"]["conversation_channel"]
-          contact_id: string | null
-          contact_name: string | null
-          contact_phone: string | null
-          created_at: string
-          id: string
-          last_message_at: string | null
-          last_message_preview: string | null
-          owner_id: string
-          unread_count: number
-        }
-        Insert: {
-          channel?: Database["public"]["Enums"]["conversation_channel"]
-          contact_id?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          id?: string
-          last_message_at?: string | null
-          last_message_preview?: string | null
-          owner_id: string
-          unread_count?: number
-        }
-        Update: {
-          channel?: Database["public"]["Enums"]["conversation_channel"]
-          contact_id?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          created_at?: string
-          id?: string
-          last_message_at?: string | null
-          last_message_preview?: string | null
-          owner_id?: string
-          unread_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversations_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      deals: {
-        Row: {
-          close_date: string | null
-          company_id: string | null
-          contact_id: string | null
-          created_at: string
-          currency: string
-          id: string
-          lost_reason: string | null
-          notes: string | null
-          owner_id: string
-          probability: number
-          stage: Database["public"]["Enums"]["deal_stage"]
-          title: string
-          value: number
-        }
-        Insert: {
-          close_date?: string | null
-          company_id?: string | null
-          contact_id?: string | null
-          created_at?: string
-          currency?: string
-          id?: string
-          lost_reason?: string | null
-          notes?: string | null
-          owner_id: string
-          probability?: number
-          stage?: Database["public"]["Enums"]["deal_stage"]
-          title: string
-          value?: number
-        }
-        Update: {
-          close_date?: string | null
-          company_id?: string | null
-          contact_id?: string | null
-          created_at?: string
-          currency?: string
-          id?: string
-          lost_reason?: string | null
-          notes?: string | null
-          owner_id?: string
-          probability?: number
-          stage?: Database["public"]["Enums"]["deal_stage"]
-          title?: string
-          value?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "deals_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deals_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          content: string
-          conversation_id: string
-          created_at: string
-          direction: Database["public"]["Enums"]["message_direction"]
-          external_id: string | null
-          id: string
-          status: Database["public"]["Enums"]["message_status"]
-        }
-        Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
-          direction: Database["public"]["Enums"]["message_direction"]
-          external_id?: string | null
-          id?: string
-          status?: Database["public"]["Enums"]["message_status"]
-        }
-        Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          direction?: Database["public"]["Enums"]["message_direction"]
-          external_id?: string | null
-          id?: string
-          status?: Database["public"]["Enums"]["message_status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pipeline_automations: {
-        Row: {
-          action_config: Json
-          action_type: Database["public"]["Enums"]["automation_action_type"]
-          created_at: string
-          deal_stage: Database["public"]["Enums"]["deal_stage"]
-          enabled: boolean
-          id: string
-          name: string
-          owner_id: string
-        }
-        Insert: {
-          action_config?: Json
-          action_type: Database["public"]["Enums"]["automation_action_type"]
-          created_at?: string
-          deal_stage: Database["public"]["Enums"]["deal_stage"]
-          enabled?: boolean
-          id?: string
-          name?: string
-          owner_id: string
-        }
-        Update: {
-          action_config?: Json
-          action_type?: Database["public"]["Enums"]["automation_action_type"]
-          created_at?: string
-          deal_stage?: Database["public"]["Enums"]["deal_stage"]
-          enabled?: boolean
-          id?: string
-          name?: string
-          owner_id?: string
-        }
-        Relationships: []
-      }
-      review_requests: {
-        Row: {
-          completed_at: string | null
-          contact_email: string | null
-          contact_id: string | null
-          contact_name: string
-          contact_phone: string | null
-          created_at: string
-          id: string
-          owner_id: string
-          platform: string
-          review_url: string | null
-          sent_at: string | null
-          status: Database["public"]["Enums"]["review_request_status"]
-        }
-        Insert: {
-          completed_at?: string | null
-          contact_email?: string | null
-          contact_id?: string | null
-          contact_name: string
-          contact_phone?: string | null
-          created_at?: string
-          id?: string
-          owner_id: string
-          platform?: string
-          review_url?: string | null
-          sent_at?: string | null
-          status?: Database["public"]["Enums"]["review_request_status"]
-        }
-        Update: {
-          completed_at?: string | null
-          contact_email?: string | null
-          contact_id?: string | null
-          contact_name?: string
-          contact_phone?: string | null
-          created_at?: string
-          id?: string
-          owner_id?: string
-          platform?: string
-          review_url?: string | null
-          sent_at?: string | null
-          status?: Database["public"]["Enums"]["review_request_status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "review_requests_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reviews: {
-        Row: {
-          author_name: string
-          content: string | null
-          created_at: string
-          id: string
-          owner_id: string
-          platform: string
-          rating: number
-          responded: boolean
-          response_text: string | null
-          review_date: string
-          review_url: string | null
-        }
-        Insert: {
-          author_name: string
-          content?: string | null
-          created_at?: string
-          id?: string
-          owner_id: string
-          platform?: string
-          rating: number
-          responded?: boolean
-          response_text?: string | null
-          review_date?: string
-          review_url?: string | null
-        }
-        Update: {
-          author_name?: string
-          content?: string | null
-          created_at?: string
-          id?: string
-          owner_id?: string
-          platform?: string
-          rating?: number
-          responded?: boolean
-          response_text?: string | null
-          review_date?: string
-          review_url?: string | null
-        }
-        Relationships: []
-      }
-      snapshots: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          owner_id: string
-          snapshot_data: Json
-          version: number
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          owner_id: string
-          snapshot_data?: Json
-          version?: number
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          owner_id?: string
-          snapshot_data?: Json
-          version?: number
-        }
-        Relationships: []
-      }
-      voice_leads: {
-        Row: {
-          ai_score: number | null
-          caller_name: string
-          caller_phone: string | null
-          converted_contact_id: string | null
-          created_at: string
-          id: string
-          intent: Database["public"]["Enums"]["voice_lead_intent"]
-          owner_id: string
-          status: Database["public"]["Enums"]["voice_lead_status"]
-          summary: string | null
-          transcript: string | null
-        }
-        Insert: {
-          ai_score?: number | null
-          caller_name: string
-          caller_phone?: string | null
-          converted_contact_id?: string | null
-          created_at?: string
-          id?: string
-          intent?: Database["public"]["Enums"]["voice_lead_intent"]
-          owner_id: string
-          status?: Database["public"]["Enums"]["voice_lead_status"]
-          summary?: string | null
-          transcript?: string | null
-        }
-        Update: {
-          ai_score?: number | null
-          caller_name?: string
-          caller_phone?: string | null
-          converted_contact_id?: string | null
-          created_at?: string
-          id?: string
-          intent?: Database["public"]["Enums"]["voice_lead_intent"]
-          owner_id?: string
-          status?: Database["public"]["Enums"]["voice_lead_status"]
-          summary?: string | null
-          transcript?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "voice_leads_converted_contact_id_fkey"
-            columns: ["converted_contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
+      profiles: TableDef<Profile>;
+      companies: TableDef<Company>;
+      contacts: TableDef<Contact, 'full_name'>;
+      pipelines: TableDef<Pipeline>;
+      stages: TableDef<Stage>;
+      lost_reasons: TableDef<LostReason>;
+      deals: TableDef<Deal>;
+      deal_stage_history: TableDef<DealStageHistory>;
+      activities: TableDef<Activity>;
+      notes: TableDef<Note>;
+      tags: TableDef<Tag>;
+      taggings: TableDef<Tagging>;
+      custom_field_defs: TableDef<CustomFieldDef>;
+      conversations: TableDef<Conversation>;
+      messages: TableDef<Message>;
+      booking_settings: TableDef<BookingSetting>;
+      appointments: TableDef<Appointment>;
+      audit_log: TableDef<AuditEntry>;
+    };
+    Views: { [_ in never]: never };
     Functions: {
-      [_ in never]: never
-    }
+      search_global: {
+        Args: { q: string; max_rows?: number };
+        Returns: { entity: EntityType; id: string; title: string; subtitle: string | null; score: number }[];
+      };
+      move_deal: {
+        Args: { p_deal_id: string; p_stage_id: string; p_before_id?: string | null; p_after_id?: string | null };
+        Returns: Deal;
+      };
+      win_deal: { Args: { p_deal_id: string }; Returns: Deal };
+      lose_deal: {
+        Args: { p_deal_id: string; p_reason_id?: string | null; p_comment?: string | null };
+        Returns: Deal;
+      };
+      reopen_deal: { Args: { p_deal_id: string }; Returns: Deal };
+      dashboard_metrics: {
+        Args: { p_from: string; p_to: string; p_owner_id?: string | null };
+        Returns: DashboardMetrics;
+      };
+      board_summary: {
+        Args: { p_pipeline_id: string; p_owner_id?: string | null };
+        Returns: { stage_id: string; deal_count: number; total_value: number }[];
+      };
+      pipeline_conversion: {
+        Args: { p_pipeline_id: string };
+        Returns: { stage_id: string; stage_name: string; stage_position: number; reached: number; won: number }[];
+      };
+      booking_page: { Args: { p_slug: string }; Returns: BookingPage | null };
+      booking_slots: { Args: { p_slug: string; p_day: string }; Returns: string[] };
+      book_slot: {
+        Args: {
+          p_slug: string;
+          p_starts_at: string;
+          p_guest_name: string;
+          p_guest_email: string;
+          p_guest_phone?: string | null;
+          p_notes?: string | null;
+        };
+        Returns: { id: string; starts_at: string; duration_minutes: number; timezone: string };
+      };
+    };
     Enums: {
-      activity_type: "call" | "email" | "meeting" | "task" | "note"
-      appointment_status: "scheduled" | "completed" | "cancelled"
-      automation_action_type:
-        | "send_email"
-        | "send_sms"
-        | "create_task"
-        | "webhook"
-      company_size: "startup" | "smb" | "mid_market" | "enterprise"
-      contact_source: "manual" | "voice_ai" | "website" | "referral"
-      contact_status: "lead" | "prospect" | "customer" | "inactive"
-      conversation_channel: "sms" | "whatsapp"
-      deal_stage:
-        | "lead"
-        | "qualified"
-        | "proposal"
-        | "negotiation"
-        | "won"
-        | "lost"
-      message_direction: "inbound" | "outbound"
-      message_status: "sent" | "delivered" | "read" | "failed"
-      review_request_status: "pending" | "sent" | "completed" | "declined"
-      voice_lead_intent: "information" | "appointment" | "callback" | "other"
-      voice_lead_status: "new" | "contacted" | "converted" | "dismissed"
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
+      app_role: AppRole;
+      entity_type: EntityType;
+      company_status: CompanyStatus;
+      contact_status: ContactStatus;
+      deal_status: DealStatus;
+      activity_type: ActivityType;
+      channel_type: ChannelType;
+      direction_type: DirectionType;
+      field_type: FieldType;
+      appt_status: ApptStatus;
+    };
+    CompositeTypes: { [_ in never]: never };
+  };
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+export type DashboardMetrics = {
+  won_value: number;
+  won_value_prev: number;
+  won_count: number;
+  lost_count: number;
+  created_count: number;
+  open_value: number;
+  open_count: number;
+  forecast: number;
+  avg_deal_size: number;
+  avg_cycle_days: number;
+  activities_done: number;
+  activities_overdue: number;
+  by_stage: { stage_id: string; name: string; position: number; count: number; value: number }[];
+  won_series: { day: string; value: number }[];
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
 
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+export type BookingPage = {
+  slug: string;
+  title: string;
+  description: string | null;
+  duration_minutes: number;
+  timezone: string;
+  horizon_days: number;
+  host_name: string | null;
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      activity_type: ["call", "email", "meeting", "task", "note"],
-      appointment_status: ["scheduled", "completed", "cancelled"],
-      automation_action_type: [
-        "send_email",
-        "send_sms",
-        "create_task",
-        "webhook",
-      ],
-      company_size: ["startup", "smb", "mid_market", "enterprise"],
-      contact_source: ["manual", "voice_ai", "website", "referral"],
-      contact_status: ["lead", "prospect", "customer", "inactive"],
-      conversation_channel: ["sms", "whatsapp"],
-      deal_stage: [
-        "lead",
-        "qualified",
-        "proposal",
-        "negotiation",
-        "won",
-        "lost",
-      ],
-      message_direction: ["inbound", "outbound"],
-      message_status: ["sent", "delivered", "read", "failed"],
-      review_request_status: ["pending", "sent", "completed", "declined"],
-      voice_lead_intent: ["information", "appointment", "callback", "other"],
-      voice_lead_status: ["new", "contacted", "converted", "dismissed"],
-    },
-  },
-} as const

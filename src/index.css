@@ -1,57 +1,103 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   Farbsystem — neutral, heller Hintergrund.
+   Alle Werte als HSL-Tripel ohne hsl(), damit Tailwind sie mit
+   Alpha-Modifiern (bg-primary/10) kombinieren kann.
+   =========================================================================== */
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 10%;
 
-    --card: 0 0% 5.5%;
-    --card-foreground: 0 0% 100%;
+    /* Flächen: Karten sind weiß, App-Chrome liegt eine Nuance darunter */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+    --surface: 240 20% 99%;
+    --surface-hover: 240 15% 96%;
 
-    --popover: 0 0% 8.6%;
-    --popover-foreground: 0 0% 100%;
+    /* Primärfarbe: sachliches Blau, bewusst markenneutral */
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
 
-    --primary: 168 100% 45%;
-    --primary-foreground: 0 0% 0%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 25%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 10%;
 
-    --secondary: 0 0% 8.6%;
-    --secondary-foreground: 215 14% 63%;
-
-    --muted: 0 0% 8.6%;
-    --muted-foreground: 218 11% 45%;
-
-    --accent: 168 100% 45%;
-    --accent-foreground: 0 0% 0%;
-
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
-    --success: 142 71% 45%;
+    --success: 142 71% 40%;
     --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 30 60% 15%;
 
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.08;
-    --ring: 168 100% 45%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 221 83% 53%;
 
-    --radius: 0.75rem;
-    --radius-input: 0.5rem;
+    --radius: 0.5rem;
+    --radius-input: 0.375rem;
     --radius-pill: 999px;
 
-    --sidebar-background: 0 0% 5.5%;
-    --sidebar-foreground: 218 11% 45%;
-    --sidebar-primary: 168 100% 45%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 8.6%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 100% / 0.08;
-    --sidebar-ring: 168 100% 45%;
+    --sidebar-background: 240 20% 99%;
+    --sidebar-foreground: 240 5% 34%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 94%;
+    --sidebar-accent-foreground: 240 10% 10%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 221 83% 53%;
+  }
 
-    --surface: 0 0% 8.6%;
-    --surface-hover: 0 0% 12%;
+  .dark {
+    --background: 240 10% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 8% 11%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 8% 11%;
+    --popover-foreground: 0 0% 98%;
+    --surface: 240 8% 11%;
+    --surface-hover: 240 6% 16%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 240 10% 8%;
+
+    --secondary: 240 6% 16%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 240 6% 16%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 240 6% 16%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 63% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 85% 55%;
+    --warning-foreground: 30 60% 12%;
+
+    --border: 240 5% 20%;
+    --input: 240 5% 20%;
+    --ring: 217 91% 60%;
+
+    --sidebar-background: 240 9% 10%;
+    --sidebar-foreground: 240 5% 65%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 240 10% 8%;
+    --sidebar-accent: 240 6% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 5% 20%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -60,24 +106,66 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    /* Tabellenziffern: verhindert das Zittern von Beträgen in Listen */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'cv11';
+  }
+
+  /* Sichtbarer Fokus nur bei Tastaturbedienung */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  ::selection {
+    @apply bg-primary/15;
   }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+@layer components {
+  /* Dezente Scrollbars — bei dichten Listen und dem Kanban-Board
+     nimmt die Standard-Scrollbar sonst zu viel Aufmerksamkeit. */
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.4);
+    background-clip: content-box;
+  }
+
+  /* Zeilenraster für Datentabellen */
+  .data-row {
+    @apply border-b border-border transition-colors hover:bg-surface-hover;
+  }
+
+  /* Karte im Kanban-Board während des Ziehens */
+  .dragging {
+    @apply opacity-40;
+  }
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
