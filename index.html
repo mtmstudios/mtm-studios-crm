@@ -13,6 +13,40 @@
 
   <body>
     <div id="root"></div>
+
+    <!--
+      Schlägt das Laden des Moduls fehl — typischerweise weil die Supabase-
+      Konfiguration im Build fehlt —, bliebe sonst nur eine leere Seite übrig.
+      Genau diese Sackgasse hat beim Vorgängerprojekt viel Zeit gekostet,
+      deshalb hier eine sichtbare Meldung statt eines weißen Nichts.
+    -->
+    <script>
+      window.addEventListener('error', function (event) {
+        var root = document.getElementById('root');
+        if (!root || root.childElementCount > 0) return;
+
+        var message = (event && event.message) || 'Unbekannter Fehler';
+        var config = message.indexOf('VITE_SUPABASE') !== -1;
+
+        root.innerHTML =
+          '<div style="font-family:Inter,system-ui,sans-serif;max-width:34rem;' +
+          'margin:15vh auto;padding:0 1.5rem;color:#18181b">' +
+          '<h1 style="font-size:1.125rem;font-weight:600;margin:0 0 .5rem">' +
+          (config ? 'Konfiguration fehlt' : 'Die Anwendung konnte nicht starten') +
+          '</h1><p style="color:#52525b;line-height:1.6;margin:0 0 1rem">' +
+          (config
+            ? 'Die Datenbank-Zugangsdaten sind in diesem Build nicht gesetzt. ' +
+              'Ohne <code>VITE_SUPABASE_URL</code> und ' +
+              '<code>VITE_SUPABASE_PUBLISHABLE_KEY</code> kann keine Verbindung ' +
+              'aufgebaut werden.'
+            : 'Beim Laden ist ein Fehler aufgetreten.') +
+          '</p><pre style="background:#f4f4f5;border-radius:.5rem;padding:.75rem;' +
+          'font-size:.8125rem;color:#3f3f46;overflow-x:auto;white-space:pre-wrap">' +
+          message.replace(/[<>&]/g, '') +
+          '</pre></div>';
+      });
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
