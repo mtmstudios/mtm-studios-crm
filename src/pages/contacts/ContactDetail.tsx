@@ -13,6 +13,7 @@ import { ActivityDialog } from '@/components/crm/ActivityDialog';
 import { ConfirmDialog } from '@/components/crm/ConfirmDialog';
 import { EntityAvatar, PropertyRow, StatusBadge } from '@/components/crm/primitives';
 import { TagPicker } from '@/components/crm/TagPicker';
+import { DocumentPanel } from '@/components/crm/DocumentPanel';
 import { ContactDialog } from './ContactDialog';
 
 export default function ContactDetail() {
@@ -171,6 +172,8 @@ export default function ContactDetail() {
             <h2 className="mb-2 text-sm font-semibold">Tags</h2>
             <TagPicker entity="contact" entityId={contact.id} />
           </section>
+
+          <DocumentPanel parent={{ contact_id: contact.id }} />
 
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="mb-2 flex items-center justify-between">

@@ -38,6 +38,7 @@ import { ActivityDialog } from '@/components/crm/ActivityDialog';
 import { ConfirmDialog } from '@/components/crm/ConfirmDialog';
 import { PropertyRow, StatusBadge } from '@/components/crm/primitives';
 import { TagPicker } from '@/components/crm/TagPicker';
+import { DocumentPanel } from '@/components/crm/DocumentPanel';
 import { DealDialog } from './DealDialog';
 
 export default function DealDetail() {
@@ -266,6 +267,8 @@ export default function DealDetail() {
             <h2 className="mb-2 text-sm font-semibold">Tags</h2>
             <TagPicker entity="deal" entityId={deal.id} />
           </section>
+
+          <DocumentPanel parent={{ deal_id: deal.id }} />
 
           <section className="rounded-lg border border-border bg-card p-4">
             <h2 className="mb-2 text-sm font-semibold">Phasenverlauf</h2>

@@ -19,6 +19,7 @@ export type FieldType =
   | 'text' | 'textarea' | 'number' | 'currency' | 'date'
   | 'select' | 'multiselect' | 'checkbox' | 'url' | 'email' | 'phone';
 export type ApptStatus = 'scheduled' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+export type ProjectStatus = 'planung' | 'laeuft' | 'pausiert' | 'abgeschlossen' | 'abgebrochen';
 
 type Profile = {
   id: string;
@@ -162,10 +163,54 @@ type Activity = {
   deal_id: string | null;
   contact_id: string | null;
   company_id: string | null;
+  /** Projektbezug — Projektaufgaben sind dieselben Aufgaben, kein zweites System */
+  project_id: string | null;
+  section_id: string | null;
+  position: number;
   owner_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+type Project = {
+  id: string;
+  name: string;
+  description: string | null;
+  company_id: string | null;
+  deal_id: string | null;
+  owner_id: string | null;
+  status: ProjectStatus;
+  color: string;
+  starts_on: string | null;
+  due_on: string | null;
+  completed_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+type ProjectSection = {
+  id: string;
+  project_id: string;
+  name: string;
+  position: number;
+  created_at: string;
+}
+
+type Document = {
+  id: string;
+  name: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  storage_path: string;
+  description: string | null;
+  company_id: string | null;
+  contact_id: string | null;
+  deal_id: string | null;
+  project_id: string | null;
+  uploaded_by: string | null;
+  created_at: string;
 }
 
 type Note = {
@@ -320,6 +365,9 @@ export type Database = {
       deal_stage_history: TableDef<DealStageHistory>;
       activities: TableDef<Activity>;
       notes: TableDef<Note>;
+      projects: TableDef<Project>;
+      project_sections: TableDef<ProjectSection>;
+      documents: TableDef<Document>;
       tags: TableDef<Tag>;
       taggings: TableDef<Tagging>;
       custom_field_defs: TableDef<CustomFieldDef>;
@@ -348,6 +396,14 @@ export type Database = {
       dashboard_metrics: {
         Args: { p_from: string; p_to: string; p_owner_id?: string | null };
         Returns: DashboardMetrics;
+      };
+      project_progress: {
+        Args: { p_project_ids?: string[] | null };
+        Returns: { project_id: string; aufgaben: number; erledigt: number; ueberfaellig: number }[];
+      };
+      move_task: {
+        Args: { p_task_id: string; p_section_id: string; p_before_id?: string | null; p_after_id?: string | null };
+        Returns: Activity;
       };
       board_summary: {
         Args: { p_pipeline_id: string; p_owner_id?: string | null };
@@ -382,6 +438,7 @@ export type Database = {
       direction_type: DirectionType;
       field_type: FieldType;
       appt_status: ApptStatus;
+      project_status: ProjectStatus;
     };
     CompositeTypes: { [_ in never]: never };
   };

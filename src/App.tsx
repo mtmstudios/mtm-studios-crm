@@ -17,6 +17,8 @@ const CompanyList = lazy(() => import('@/pages/companies/CompanyList'));
 const CompanyDetail = lazy(() => import('@/pages/companies/CompanyDetail'));
 const DealBoard = lazy(() => import('@/pages/deals/DealBoard'));
 const DealDetail = lazy(() => import('@/pages/deals/DealDetail'));
+const ProjectList = lazy(() => import('@/pages/projects/ProjectList'));
+const ProjectDetail = lazy(() => import('@/pages/projects/ProjectDetail'));
 const ActivityList = lazy(() => import('@/pages/activities/ActivityList'));
 const Inbox = lazy(() => import('@/pages/inbox/Inbox'));
 const Calendar = lazy(() => import('@/pages/calendar/Calendar'));
@@ -73,6 +75,8 @@ function ProtectedRoutes() {
             <Route path="/firmen/:id" element={<CompanyDetail />} />
             <Route path="/deals" element={<DealBoard />} />
             <Route path="/deals/:id" element={<DealDetail />} />
+            <Route path="/projekte" element={<ProjectList />} />
+            <Route path="/projekte/:id" element={<ProjectDetail />} />
             <Route path="/aufgaben" element={<ActivityList />} />
             <Route path="/posteingang" element={<Inbox />} />
             <Route path="/kalender" element={<Calendar />} />

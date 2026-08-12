@@ -13,6 +13,7 @@ import { ActivityDialog } from '@/components/crm/ActivityDialog';
 import { ConfirmDialog } from '@/components/crm/ConfirmDialog';
 import { EntityAvatar, PropertyRow, StatusBadge } from '@/components/crm/primitives';
 import { TagPicker } from '@/components/crm/TagPicker';
+import { DocumentPanel } from '@/components/crm/DocumentPanel';
 import { ContactDialog } from '@/pages/contacts/ContactDialog';
 import { CompanyDialog } from './CompanyDialog';
 
@@ -163,6 +164,8 @@ export default function CompanyDetail() {
             <h2 className="mb-2 text-sm font-semibold">Tags</h2>
             <TagPicker entity="company" entityId={company.id} />
           </section>
+
+          <DocumentPanel parent={{ company_id: company.id }} />
 
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="mb-2 flex items-center justify-between">
