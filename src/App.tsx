@@ -1,7 +1,8 @@
 import { Suspense, lazy, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Clock, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
@@ -53,12 +54,41 @@ function FullPageSpinner() {
 }
 
 /** Blockiert alles hinter der Anmeldung und merkt sich das Ziel. */
+/**
+ * Ein angemeldetes, aber noch nicht freigeschaltetes Konto sieht wegen RLS
+ * überall nichts. Ohne diesen Hinweis wirkte das wie ein kaputtes CRM statt
+ * wie eine ausstehende Freigabe.
+ */
+function WartetAufFreischaltung() {
+  const { profile, signOut } = useAuth();
+  return (
+    <div className="grid min-h-screen place-items-center bg-surface px-6">
+      <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 text-center">
+        <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-full bg-secondary text-muted-foreground">
+          <Clock className="h-5 w-5" />
+        </span>
+        <h1 className="text-lg font-semibold">Konto wartet auf Freischaltung</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {profile?.email} ist angelegt, aber noch nicht freigegeben. Ein Administrator
+          schaltet den Zugang unter{' '}
+          <span className="whitespace-nowrap">Einstellungen → Team</span> frei.
+        </p>
+        <Button variant="outline" size="sm" className="mt-5" onClick={() => void signOut()}>
+          Abmelden
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function RequireAuth({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <FullPageSpinner />;
   if (!session) return <Navigate to="/anmelden" state={{ from: location }} replace />;
+  // profile ist während des Nachladens null — das deckt bereits loading ab
+  if (profile && !profile.is_active) return <WartetAufFreischaltung />;
   return <>{children}</>;
 }
 
